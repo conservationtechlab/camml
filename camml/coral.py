@@ -4,18 +4,27 @@
 import time
 
 import cv2
-import imutils
-
 from PIL import Image
+
 from edgetpu.detection.engine import DetectionEngine
-from edgetpu.classification.engine import ClassificationEngine
-# from edgetpu.utils import dataset_utils
+from pycoral.adapters import classify
+from pycoral.adapters import common
+from pycoral.utils.edgetpu import make_interpreter
 
 
 class ImageClassifierHandler():
+    """Handles image classification on the coral
 
-    def __init__(self, model):
-        self.engine = ClassificationEngine(model)
+    """
+    def __init__(self, model,
+                 threshold=0.0,
+                 top_k=5):
+        self.interpreter = make_interpreter(model)
+        self.interpreter.allocate_tensors()
+        self.size = common.input_size(self.interpreter)
+
+        self.threshold = threshold
+        self.top_k = top_k
 
     def infer(self, frame):
         """Infer class of image.
@@ -27,24 +36,27 @@ class ImageClassifierHandler():
 
         Returns
         -------
-        results :
-           top_1 classification
+        results : list of pycoral.adapters.classify.Class
+           classes identified in the image
 
         inference_time : float
            Time taken to perform inference in milliseconds
         """
 
-        frame = imutils.resize(frame, width=500)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = Image.fromarray(frame)
+        frame = Image.fromarray(frame).convert('RGB').resize(self.size,
+                                                             Image.ANTIALIAS)
+        common.set_input(self.interpreter, frame)
 
-        start = time.time()
-        results = self.engine.classify_with_image(frame, top_k=1)
-        end = time.time()
+        start = time.perf_counter()
+        self.interpreter.invoke()
+        inference_time = (time.perf_counter() - start) * 1000
 
-        inference_time = (end-start) * 1000.0
+        classes = classify.get_classes(self.interpreter,
+                                       self.top_k,
+                                       self.threshold)
 
-        return results, inference_time
+        return classes, inference_time
 
 
 class ObjectDetectorHandler():

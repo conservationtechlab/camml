@@ -3,11 +3,12 @@
 """
 import os
 import sys
-import time
 
 import cv2
 
-from camml.coral import ImageClassifierHandler, read_classes_from_file
+from camml.coral import ImageClassifierHandler
+
+TOP_K = 1
 
 MODEL_PATH = '/home/ian/git/coral/pycoral/test_data/'
 MODEL_CONFIG_FILE = 'mobilenet_v2_1.0_224_inat_bird_quant_edgetpu.tflite'
@@ -21,7 +22,8 @@ CLASSES = []
 for row in open(CLASSES_FILE):
     CLASSES.append(row.strip())
 
-classifier = ImageClassifierHandler(model)
+classifier = ImageClassifierHandler(model,
+                                    top_k=TOP_K)
 
 cap = cv2.VideoCapture(0)
 ok, frame = cap.read()
@@ -32,10 +34,12 @@ try:
         results, inf_time = classifier.infer(frame)
 
         if results:
-            label = CLASSES[results[0][0]]
-            score = results[0][1]
+            print("----{:.2f} milliseconds".format(inf_time))
 
-        print("{} | {:.2f} | {:.2f}".format(label, score, inf_time))
+            for result in results:
+                label = CLASSES[result.id]
+                score = result.score
+                print("{} | {:.2f}".format(label, score))
 except KeyboardInterrupt:
     print('Received keyboard interrupt.')
     sys.exit()
