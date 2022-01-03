@@ -4,21 +4,28 @@
 import time
 
 import cv2
-import imutils
-
 from PIL import Image
-from edgetpu.detection.engine import DetectionEngine
-from edgetpu.classification.engine import ClassificationEngine
-# from edgetpu.utils import dataset_utils
+
+from pycoral.adapters import common, classify, detect
+from pycoral.utils.edgetpu import make_interpreter
 
 
 class ImageClassifierHandler():
+    """Handles image classification on the coral
 
-    def __init__(self, model):
-        self.engine = ClassificationEngine(model)
+    """
+    def __init__(self, model,
+                 threshold=0.0,
+                 top_k=5):
+        self.interpreter = make_interpreter(model)
+        self.interpreter.allocate_tensors()
+        self.input_size = common.input_size(self.interpreter)
+
+        self.threshold = threshold
+        self.top_k = top_k
 
     def infer(self, frame):
-        """Infer class of image.
+        """Perform inference on image
 
         Parameters
         ----------
@@ -27,27 +34,33 @@ class ImageClassifierHandler():
 
         Returns
         -------
-        results :
-           top_1 classification
+        results : list of pycoral.adapters.classify.Class
+           classes identified in the image
 
         inference_time : float
            Time taken to perform inference in milliseconds
         """
 
-        frame = imutils.resize(frame, width=500)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = Image.fromarray(frame)
+        frame = Image.fromarray(frame).convert('RGB').resize(self.input_size,
+                                                             Image.ANTIALIAS)
+        common.set_input(self.interpreter, frame)
 
-        start = time.time()
-        results = self.engine.classify_with_image(frame, top_k=1)
-        end = time.time()
+        start = time.perf_counter()
+        self.interpreter.invoke()
+        inference_time = (time.perf_counter() - start) * 1000
 
-        inference_time = (end-start) * 1000.0
+        classes = classify.get_classes(self.interpreter,
+                                       self.top_k,
+                                       self.threshold)
 
-        return results, inference_time
+        return classes, inference_time
 
 
 class ObjectDetectorHandler():
+    """Handles object detection on the coral
+
+    """
 
     def __init__(self,
                  model,
@@ -55,9 +68,8 @@ class ObjectDetectorHandler():
                  input_width,  # not used.  here to match dnn libs' API
                  input_height):  # not used.  here to match dnn libs' API
 
-        self.DETECTOR_FRAME_WIDTH = 500
-        self.engine = DetectionEngine(model)
-        # self.labels = dataset_utils.read_label_file(labels)
+        self.interpreter = make_interpreter(model)
+        self.interpreter.allocate_tensors()
 
     def infer(self, frame):
         """Perform object detection on image.
@@ -69,39 +81,60 @@ class ObjectDetectorHandler():
 
         Returns
         -------
-        results
+        results :
 
-        inference_time
+        inference_time : float
+            Time taken to perform inference in milliseconds
 
         """
-        frame = imutils.resize(frame, width=self.DETECTOR_FRAME_WIDTH)
 
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame = Image.fromarray(frame)
+        _, scale = common.set_resized_input(self.interpreter,
+                                            frame.size,
+                                            lambda size: frame.resize(size,
+                                                                      Image.ANTIALIAS))
 
-        start = time.time()
-        results = self.engine.detect_with_image(frame,
-                                                threshold=0.05,
-                                                # keep_aspect_ratio=args.keep_aspect_ratio,
-                                                keep_aspect_ratio=True,
-                                                relative_coord=False,
-                                                top_k=10)
-        end = time.time()
-        inference_time = (end-start) * 1000.0
-        return results, inference_time
+        start = time.perf_counter()
+        self.interpreter.invoke()
+        inf_time = (time.perf_counter() - start) * 1000
+        objs = detect.get_objects(self.interpreter, 0.05, scale)
+
+        return objs, inf_time
 
     def filter_boxes(self,
                      results,
                      frame,
                      confidence_threshold,
                      nms_threshold):
-        """Scan through all the bounding boxes that are output from a network
-        and keep only the ones with high confidence scores. Assign the
-        box's class label as the class with the highest score.  Apply NMS
-        on boxes.
+        """Apply filtering to boxes from inference
 
-        Return a list of dicts, each dict containing the class_id,
-        confidence, and box dimensions for a given box.
+        Scan through all the bounding boxes from a network output from a
+        network and keep only the ones with high confidence
+        scores. Assign the box's class label as the class with the
+        highest score.  Apply NMS on boxes.
+
+        NOTE: Non-maximum suppression is not currently implemented
+
+        Parameters
+        ----------
+        results :
+            Objects from an inference
+
+        frame : numpy.ndarray
+            Frame the inference was performed on
+
+        confidence_threshold : float
+            Threshold for filtering boxes based on confidence score
+
+        nms_threshold : float
+            UNUSED!! Threshold for doing NMS filtering
+
+        Returns
+        -------
+        list of dict:
+            Each dict contains the class_id, confidence, and box
+            dimensions for a given box.
 
         """
 
@@ -109,21 +142,16 @@ class ObjectDetectorHandler():
         confidences = []
         boxes = []
 
-        ratio = frame.shape[1]/self.DETECTOR_FRAME_WIDTH
-
         for result in results:
             if result.score > confidence_threshold:
-                class_ids.append(result.label_id)
+                class_ids.append(result.id)
                 confidences.append(float(result.score))
 
-                box = result.bounding_box.flatten().astype('int')
-                (startX, startY, endX, endY) = box
-                boxes.append([int(startX * ratio),
-                              int(startY * ratio),
-                              int((endX - startX) * ratio),
-                              int((endY - startY) * ratio)])
-
-        # TODO: Do non-maximum suppression on the boxes
+                bbox = result.bbox
+                boxes.append([bbox.xmin,
+                              bbox.ymin,
+                              bbox.xmax - bbox.xmin,
+                              bbox.ymax - bbox.ymin])
 
         lboxes = []
 
