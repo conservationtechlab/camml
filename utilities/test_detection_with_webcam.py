@@ -1,5 +1,9 @@
 """Test coral object detection on frames from webcam
 
+Captures from webcam (assumes attached webcam) continuously and runs
+object detector on Coral USB accelerator (also assumes is attached) on
+captured frames, reporting detected objects to terminal.
+
 """
 import os
 import sys
@@ -13,6 +17,7 @@ MODEL_CONFIG_FILE = 'ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite'
 CLASS_NAMES_FILE = "coco_labels.txt"
 
 INPUT_WIDTH = INPUT_HEIGHT = 416
+SCORE_THRESHOLD = .7
 NMS_THRESHOLD = .4
 
 MODEL_CONFIG = os.path.join(MODEL_PATH,
@@ -34,11 +39,11 @@ ok, frame = cap.read()
 try:
     while True:
         ok, frame = cap.read()
-        outs, inf_time = detector.infer(frame)
+        objs, inf_time = detector.infer(frame)
 
-        lboxes = detector.filter_boxes(outs,
+        lboxes = detector.filter_boxes(objs,
                                        frame,
-                                       .1,
+                                       SCORE_THRESHOLD,
                                        .2)
 
         if lboxes:
