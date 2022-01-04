@@ -27,16 +27,18 @@ setuptools.setup(
     license="MIT",
     version=find_version(read('camml/__init__.py')),
     author=AUTHOR,
-    packages=setuptools.find_packages(),
-    install_required=[
+    packages=['camml'],
+    include_package_data=True,
+    install_requires=[
         'opencv-python',
-        'imutils',
         'pillow',
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         'Development Status :: 2 - Pre-Alpha',
+        'Intended Audience :: Science/Research',
+        'Operating System :: POSIX :: Linux',
         'Topic :: Scientific/Engineering',
     ],
 )
