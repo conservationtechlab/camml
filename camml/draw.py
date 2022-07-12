@@ -16,7 +16,8 @@ def labeled_box(frame,
                 color=(187, 209, 136),
                 show_score=True,
                 font_size=1.5,
-                font_thickness=4):
+                font_thickness=4,
+                draw_label=True):
     """Draw a bounding box with info label
 
     Bounding box has label attached that displays the class ID and
@@ -35,16 +36,17 @@ def labeled_box(frame,
                   color,
                   thickness=thickness)
 
-    label_props = {'font_size': font_size,
-                   'font_thickness': font_thickness,
-                   'show_score': show_score,
-                   'top': bottom,
-                   'left': left}
-    
-    _draw_label(frame,
-                classes,
-                lbox,
-                label_props)
+    if draw_label:
+        label_props = {'font_size': font_size,
+                       'font_thickness': font_thickness,
+                       'show_score': show_score,
+                       'top': bottom,
+                       'left': left}
+
+        _draw_label(frame,
+                    classes,
+                    lbox,
+                    label_props)
 
 
 def box_to_coords(box,
