@@ -168,35 +168,43 @@ class ObjectDetectorHandler():
 
 
 def read_classes_from_file(label_file):
-    """Read in class labels from a file.
-
-    Parameters
-    ----------
-    label_file : string
-        Filename of file that contains class ID with associated label
-        (one label per line). Class ID must match index numbers used
-        in neural net.
-
-    Returns
-    -------
-    labels : list of string
-        List of the class labels, indexable by class_id from network
-
-    """
-    ingested = []
-    highest_class_id = 0
+    labels = []
     for row in open(label_file):
-        class_id, label = row.strip().split(maxsplit=1)
-        class_id = int(class_id)
-        ingested.append([class_id, label.strip()])
-        if class_id > highest_class_id:
-            highest_class_id = class_id
-
-    labels = [None for i in range(highest_class_id + 1)]
-    for class_id, label in ingested:
-        labels[class_id] = label
+        labels.append(row.strip())
 
     return labels
+    
+
+# def read_classes_from_file(label_file):
+#     """Read in class labels from a file.
+
+#     Parameters
+#     ----------
+#     label_file : string
+#         Filename of file that contains class ID with associated label
+#         (one label per line). Class ID must match index numbers used
+#         in neural net.
+
+#     Returns
+#     -------
+#     labels : list of string
+#         List of the class labels, indexable by class_id from network
+
+#     """
+#     ingested = []
+#     highest_class_id = 0
+#     for row in open(label_file):
+#         class_id, label = row.strip().split(maxsplit=1)
+#         class_id = int(class_id)
+#         ingested.append([class_id, label.strip()])
+#         if class_id > highest_class_id:
+#             highest_class_id = class_id
+
+#     labels = [None for i in range(highest_class_id + 1)]
+#     for class_id, label in ingested:
+#         labels[class_id] = label
+
+#     return labels
 
 
 class TargetDetector(ObjectDetectorHandler):
