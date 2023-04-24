@@ -12,7 +12,7 @@ import cv2
 
 from camml.coral import ObjectDetectorHandler
 
-MODEL_PATH = '/home/ian/git/coral/pycoral/test_data/'
+MODEL_PATH = '/usr/share/pycoral/examples/models'
 MODEL_CONFIG_FILE = 'ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite'
 CLASS_NAMES_FILE = "coco_labels.txt"
 
