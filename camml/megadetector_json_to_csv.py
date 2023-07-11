@@ -3,11 +3,20 @@
  CSV format needed for the object_detector.Dataloader.from_csv()
  method as used in this article:
  https://www.tensorflow.org/lite/models/modify/model_maker/object_detection
+
+ Run as:
+     python megadetector_json_to_csv.py output.json new_output.csv \
+     /home/user/image_folder/
+
+ Or to include blank detections(causes an error when training):
+     python megadetector_json_to_csv.py output.json new_output.csv \
+     /home/user/image_folder/ --include
 """
 
 import json
 import csv
 import os
+import argparse
 
 
 def main():
@@ -17,27 +26,34 @@ def main():
     data to a CSV in the proper format [set, class, file, xmin, ymin,
     '', '', xmax, ymax, '', ''].
     """
-    # Input JSON file
-    input_file = 'test_output.json'
-
-    # Output CSV file
-    output_file = 'test_output.csv'
+    # Get command line arguments when running program
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input_file", type=str,
+                        help="filepath for the JSON input file")
+    parser.add_argument("output_file", type=str,
+                        help="filepath for the CSV output file")
+    parser.add_argument("image_folder_path", type=str,
+                        help="path to the image folder")
+    parser.add_argument("--include",
+                        help="include blank detections in csv",
+                        dest='include', action='store_true')
+    args = parser.parse_args()
 
     # Opening JSON file and loading the data
     # into the variable data
-    with open(input_file, encoding="utf-8") as json_file:
+    with open(args.input_file, encoding="utf-8") as json_file:
         data = json.load(json_file)
 
     image_data = data['images']
 
     # Open a file for writing
-    with open(output_file, 'w', encoding="utf-8") as data_file:
+    with open(args.output_file, 'w', encoding="utf-8") as data_file:
         # Create the csv writer object
         csv_writer = csv.writer(data_file)
 
         for img in image_data:
             # Set the file path
-            image_path = os.path.join('/home/user/test_images',
+            image_path = os.path.join(args.image_folder_path,
                                       img['file'])
             for i in range(0, len(img['detections'])):
                 # Convert xywh bbox to xmin, ymin, xmax, ymax bbox
@@ -96,13 +112,14 @@ def main():
                                          '', '', '', '', '',
                                          '', '', '', ''])
 
-        # To make images with no detections appear in the csv file
-        # uncomment if block
-        # if (len(img['detections']) == 0):
-        #    csv_writer.writerow(['UNASSIGNED',
-        #                         image_path,
-        #                         None, None, None, None,
-        #                         None, None, None, None, None])
+            # To make images with no detections appear in the csv file
+            if args.include:
+                if len(img['detections']) == 0:
+                    csv_writer.writerow(['UNASSIGNED',
+                                         image_path,
+                                         None, None, None,
+                                         None, None, None,
+                                         None, None, None])
 
 
 def coco_to_pascal_voc(x_tl, y_tl, width, height):
