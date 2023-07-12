@@ -17,6 +17,7 @@ import json
 import csv
 import os
 import argparse
+import random
 
 
 def main():
@@ -26,6 +27,7 @@ def main():
     data to a CSV in the proper format [set, class, file, xmin, ymin,
     '', '', xmax, ymax, '', ''].
     """
+    # pylint: disable=locally-disabled, too-many-locals
     # Get command line arguments when running program
     parser = argparse.ArgumentParser()
     parser.add_argument("input_file", type=str,
@@ -73,11 +75,20 @@ def main():
                 img['detections'][i]['bbox'][2] = x_max
                 img['detections'][i]['bbox'][3] = y_max
 
-                # Could randomly set 80% of images to train,
+                # Randomly set 80% of images to train,
                 # 10% to validation, and 10% to test. Currently all set
-                # to UNASSIGNED then manually changed in csv
+                rand_num = random.randint(1, 100)
+                set_type = ''
+
+                if rand_num <= 80:
+                    set_type = 'TRAIN'
+                elif rand_num <= 90:
+                    set_type = 'VALIDATION'
+                elif rand_num <= 100:
+                    set_type = 'TEST'
+
                 if img['detections'][i]['category'] == '1':
-                    csv_writer.writerow(['UNASSIGNED',
+                    csv_writer.writerow([set_type,
                                          image_path,
                                          'animal',
                                          img['detections'][i]['bbox'][0],
@@ -87,7 +98,7 @@ def main():
                                          img['detections'][i]['bbox'][3],
                                          None, None])
                 elif img['detections'][i]['category'] == '2':
-                    csv_writer.writerow(['UNASSIGNED',
+                    csv_writer.writerow([set_type,
                                          image_path,
                                          'person',
                                          img['detections'][i]['bbox'][0],
@@ -97,7 +108,7 @@ def main():
                                          img['detections'][i]['bbox'][3],
                                          None, None])
                 elif img['detections'][i]['category'] == '3':
-                    csv_writer.writerow(['UNASSIGNED',
+                    csv_writer.writerow([set_type,
                                          image_path,
                                          'vehicle',
                                          img['detections'][i]['bbox'][0],
@@ -107,7 +118,7 @@ def main():
                                          img['detections'][i]['bbox'][3],
                                          None, None])
                 else:
-                    csv_writer.writerow(['UNASSIGNED',
+                    csv_writer.writerow([set_type,
                                          image_path,
                                          '', '', '', '', '',
                                          '', '', '', ''])
@@ -115,7 +126,7 @@ def main():
             # To make images with no detections appear in the csv file
             if args.include:
                 if len(img['detections']) == 0:
-                    csv_writer.writerow(['UNASSIGNED',
+                    csv_writer.writerow([set_type,
                                          image_path,
                                          None, None, None,
                                          None, None, None,
