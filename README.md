@@ -8,10 +8,10 @@ The `obj_det_train.py` file uses transfer learning to retrain an EfficientDet-Li
 ## Install packages
 
 `sudo apt -y install libportaudio2`
-`pip install -q --use-deprecated=legacy-resolver tflite-model-maker`
-`pip install -q pycocotools`
-`pip install -q opencv-python-headless==4.1.2.30`
-`pip uninstall -y tensorflow && pip install -q tensorflow==2.8.0`
+`pip install -q --use-deprecated=legacy-resolver tflite-model-maker`  
+`pip install -q pycocotools`  
+`pip install -q opencv-python-headless==4.1.2.30`  
+`pip uninstall -y tensorflow && pip install -q tensorflow==2.8.0`  
 
 ## Steps for training model
 
@@ -21,10 +21,10 @@ The `obj_det_train.py` file uses transfer learning to retrain an EfficientDet-Li
 
 ## Compile the TFLite model for the Edge TPU
 
-`curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -`
-`echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list`
-`sudo apt-get update`
-`sudo apt-get install edgetpu-compiler`
+`curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -`  
+`echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list`  
+`sudo apt-get update`  
+`sudo apt-get install edgetpu-compiler`  
 Pycoral should be installed as well.
 
 ## Test the model on Coral Edge TPU
@@ -36,11 +36,11 @@ A labels.txt file will need to be made containing:
 3 vehicle
 ```
 
-`python3 detect_image.py \
-  --model model_edgetpu.tflite \
-  --labels labels.txt \
-  --input animal.jpg \
-  --output animal_result.jpg`
+`python3 detect_image.py \  
+  --model model_edgetpu.tflite \  
+  --labels labels.txt \  
+  --input animal.jpg \  
+  --output animal_result.jpg`  
 
 # Dependencies
 
