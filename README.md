@@ -34,13 +34,10 @@ A labels.txt file will need to be made containing:
 1 animal
 2 person
 3 vehicle
-```
+```  
 
-`python3 detect_image.py \  
-  --model model_edgetpu.tflite \  
-  --labels labels.txt \  
-  --input animal.jpg \  
-  --output animal_result.jpg`  
+Run the Edge compiled TFLite model on the Coral:  
+`python3 detect_image.py --model model_edgetpu.tflite --labels labels.txt --input animal.jpg --output animal_result.jpg`  
 
 # Dependencies
 
