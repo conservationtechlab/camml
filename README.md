@@ -27,6 +27,9 @@ The `obj_det_train.py` file uses transfer learning to retrain an EfficientDet-Li
 `sudo apt-get install edgetpu-compiler`  
 Pycoral should be installed as well.
 
+Compile model to run on  1 Edge TPU:
+`edgetpu_compiler model.tflite --num_segments=1`
+
 ## Test the model on Coral Edge TPU
 
 A labels.txt file will need to be made containing:
