@@ -7,7 +7,7 @@ The `obj_det_train.py` file uses transfer learning to retrain an EfficientDet-Li
 
 ## Install packages
 
-`sudo apt -y install libportaudio2`
+`sudo apt -y install libportaudio2`  
 `pip install -q --use-deprecated=legacy-resolver tflite-model-maker`  
 `pip install -q pycocotools`  
 `pip install -q opencv-python-headless==4.1.2.30`  
