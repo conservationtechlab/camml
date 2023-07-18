@@ -87,41 +87,22 @@ def main():
                 elif rand_num <= 100:
                     set_type = 'TEST'
 
+                # Get the class name from the image file name
+                slash = img['file'].find('/')
+                category = img['file'][0:slash]
+
+                # Megadetector uses 3 categories 1-animal, 2-person,
+                # 3-vehicle, only the animal detections are needed
                 if img['detections'][i]['category'] == '1':
                     csv_writer.writerow([set_type,
                                          image_path,
-                                         'animal',
+                                         category,
                                          img['detections'][i]['bbox'][0],
                                          img['detections'][i]['bbox'][1],
                                          None, None,
                                          img['detections'][i]['bbox'][2],
                                          img['detections'][i]['bbox'][3],
                                          None, None])
-                elif img['detections'][i]['category'] == '2':
-                    csv_writer.writerow([set_type,
-                                         image_path,
-                                         'person',
-                                         img['detections'][i]['bbox'][0],
-                                         img['detections'][i]['bbox'][1],
-                                         None, None,
-                                         img['detections'][i]['bbox'][2],
-                                         img['detections'][i]['bbox'][3],
-                                         None, None])
-                elif img['detections'][i]['category'] == '3':
-                    csv_writer.writerow([set_type,
-                                         image_path,
-                                         'vehicle',
-                                         img['detections'][i]['bbox'][0],
-                                         img['detections'][i]['bbox'][1],
-                                         None, None,
-                                         img['detections'][i]['bbox'][2],
-                                         img['detections'][i]['bbox'][3],
-                                         None, None])
-                else:
-                    csv_writer.writerow([set_type,
-                                         image_path,
-                                         '', '', '', '', '',
-                                         '', '', '', ''])
 
             # To make images with no detections appear in the csv file
             if args.include:
