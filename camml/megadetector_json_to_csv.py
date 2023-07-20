@@ -57,61 +57,65 @@ def main():
             # Set the file path
             image_path = os.path.join(args.image_folder_path,
                                       img['file'])
-            for i in range(0, len(img['detections'])):
-                # Convert xywh bbox to xmin, ymin, xmax, ymax bbox
-                x_min, y_min, x_max, y_max = coco_to_pascal_voc(
-                    img['detections'][i]['bbox'][0],
-                    img['detections'][i]['bbox'][1],
-                    img['detections'][i]['bbox'][2],
-                    img['detections'][i]['bbox'][3])
 
-                # Round to 4 digits to match CSV format
-                x_min, y_min = round(x_min, 4), round(y_min, 4)
-                x_max, y_max = round(x_max, 4), round(y_max, 4)
+            if 'failure' in img.keys():
+                print(img['file'] + ' failed to access.\n')
+            else:
+                for i in range(0, len(img['detections'])):
+                    # Convert xywh bbox to xmin, ymin, xmax, ymax bbox
+                    x_min, y_min, x_max, y_max = coco_to_pascal_voc(
+                        img['detections'][i]['bbox'][0],
+                        img['detections'][i]['bbox'][1],
+                        img['detections'][i]['bbox'][2],
+                        img['detections'][i]['bbox'][3])
 
-                # Set bbox coordinates to new values
-                img['detections'][i]['bbox'][0] = x_min
-                img['detections'][i]['bbox'][1] = y_min
-                img['detections'][i]['bbox'][2] = x_max
-                img['detections'][i]['bbox'][3] = y_max
+                    # Round to 4 digits to match CSV format
+                    x_min, y_min = round(x_min, 4), round(y_min, 4)
+                    x_max, y_max = round(x_max, 4), round(y_max, 4)
 
-                # Randomly set 80% of images to train,
-                # 10% to validation, and 10% to test. Currently all set
-                rand_num = random.randint(1, 100)
-                set_type = ''
+                    # Set bbox coordinates to new values
+                    img['detections'][i]['bbox'][0] = x_min
+                    img['detections'][i]['bbox'][1] = y_min
+                    img['detections'][i]['bbox'][2] = x_max
+                    img['detections'][i]['bbox'][3] = y_max
 
-                if rand_num <= 80:
-                    set_type = 'TRAIN'
-                elif rand_num <= 90:
-                    set_type = 'VALIDATION'
-                elif rand_num <= 100:
-                    set_type = 'TEST'
+                    # Randomly set 80% of images to train,
+                    # 10% to validation, and 10% to test. Currently all set
+                    rand_num = random.randint(1, 100)
+                    set_type = ''
 
-                # Get the class name from the image file name
-                slash = img['file'].find('/')
-                category = img['file'][0:slash]
+                    if rand_num <= 80:
+                        set_type = 'TRAIN'
+                    elif rand_num <= 90:
+                        set_type = 'VALIDATION'
+                    elif rand_num <= 100:
+                        set_type = 'TEST'
 
-                # Megadetector uses 3 categories 1-animal, 2-person,
-                # 3-vehicle, only the animal detections are needed
-                if img['detections'][i]['category'] == '1':
-                    csv_writer.writerow([set_type,
-                                         image_path,
-                                         category,
-                                         img['detections'][i]['bbox'][0],
-                                         img['detections'][i]['bbox'][1],
-                                         None, None,
-                                         img['detections'][i]['bbox'][2],
-                                         img['detections'][i]['bbox'][3],
-                                         None, None])
+                    # Get the class name from the image file name
+                    slash = img['file'].find('/')
+                    category = img['file'][0:slash]
 
-            # To make images with no detections appear in the csv file
-            if args.include:
-                if len(img['detections']) == 0:
-                    csv_writer.writerow([set_type,
-                                         image_path,
-                                         None, None, None,
-                                         None, None, None,
-                                         None, None, None])
+                    # Megadetector uses 3 categories 1-animal, 2-person,
+                    # 3-vehicle, only the animal detections are needed
+                    if img['detections'][i]['category'] == '1':
+                        csv_writer.writerow([set_type,
+                                             image_path,
+                                             category,
+                                             img['detections'][i]['bbox'][0],
+                                             img['detections'][i]['bbox'][1],
+                                             None, None,
+                                             img['detections'][i]['bbox'][2],
+                                             img['detections'][i]['bbox'][3],
+                                             None, None])
+
+                # To make images with no detections appear in the csv file
+                if args.include:
+                    if len(img['detections']) == 0:
+                        csv_writer.writerow([set_type,
+                                             image_path,
+                                             None, None, None,
+                                             None, None, None,
+                                             None, None, None])
 
 
 def coco_to_pascal_voc(x_tl, y_tl, width, height):
