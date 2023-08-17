@@ -6,11 +6,11 @@
 
  Run as:
      python megadetector_json_to_csv.py output.json new_output.csv \
-     /home/user/image_folder/
+     /home/user/image_folder/ 0.9
 
  Or to include blank detections(causes an error when training):
      python megadetector_json_to_csv.py output.json new_output.csv \
-     /home/user/image_folder/ --include
+     /home/user/image_folder/ 0.9 --include
 """
 
 import json
@@ -36,6 +36,8 @@ def main():
                         help="filepath for the CSV output file")
     parser.add_argument("image_folder_path", type=str,
                         help="path to the image folder")
+    parser.add_argument("conf", type=float,
+                        help="confidence threshold")
     parser.add_argument("--include",
                         help="include blank detections in csv",
                         dest='include', action='store_true')
@@ -97,7 +99,9 @@ def main():
 
                     # Megadetector uses 3 categories 1-animal, 2-person,
                     # 3-vehicle, only the animal detections are needed
-                    if img['detections'][i]['category'] == '1':
+                    # Filters detections so only >= conf detections appear
+                    if (img['detections'][i]['category'] == '1'
+                            and img['detections'][i]['conf'] >= args.conf):
                         csv_writer.writerow([set_type,
                                              image_path,
                                              category,
