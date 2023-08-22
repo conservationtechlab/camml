@@ -7,10 +7,6 @@
  Run as:
      python megadetector_json_to_csv.py output.json new_output.csv \
      /home/user/image_folder/
-
- Or to include blank detections(causes an error when training):
-     python megadetector_json_to_csv.py output.json new_output.csv \
-     /home/user/image_folder/ --include
 """
 
 import json
@@ -36,8 +32,6 @@ def main():
                         help="filepath for the JSON input file")
     parser.add_argument("output_folder", type=str,
                         help="filepath for the txt output files")
-    #parser.add_argument("image_folder_path", type=str,
-    #                    help="path to the image folder")
     parser.add_argument("confidence", type=float,
                         help="confidence threshold for megadetector detections")
     args = parser.parse_args()
@@ -98,42 +92,6 @@ names: ['Cat']
 
     with open('data.yaml', 'w') as file:
         yaml.dump(content, file, sort_keys=False)
-
-
-
-
-'''
-    # Delete the empty .txt files with no detections that fit our criteria
-    # Move the images corresponding to these text files to a different folder
-    no_of_files_deleted = 0
-    
-    # Route through the directories and files within the path -
-    for (dir, _, files) in os.walk(args.output_folder):
-        for filename in files:
-            img_filename = filename[:-3] + 'jpg'
-            # Generate file path
-            file_path = os.path.join(dir, filename)
-            image_path = os.path.join(args.image_folder_path, img_filename)
-  
-            # Check if it is file and empty (size = 0)
-            if (
-                os.path.isfile(file_path) and
-                os.path.getsize(file_path) == 0
-            ):
-  
-                # Print the path of the file that will be deleted
-                print("Deleting File >>>", file_path.replace('\\', '/'))
-                print("Moving File >>>", image_path.replace('\\', '/'))
-  
-                # Delete the empty file 
-                os.remove(file_path)
-                #os.remove(image_path)
-                shutil.move(image_path, "/home/ericescareno/coral/pycoraltest/openimages_test/OIDv4_ToolKit/OID/Dataset/train/blank_detections/" + img_filename)
-  
-                #no_of_files_deleted += 2
-  
-    #print(no_of_files_deleted, "file(s) have been deleted.")
-'''
 
 
 
