@@ -1,5 +1,10 @@
 """Converts megadetector output JSON file to match Yolov8 pytortch txt format
 
+A .yaml file with image directory and class information is needed to
+train a Yolov8 model. The yaml file will need a format similar to 
+the one described in the "EXAMPLE" section here:
+https://roboflow.com/formats/yolov8-pytorch-txt
+
  Run as:
      python megadetector_json_to_csv.py output.json new_output.csv \
      /home/user/image_folder/
@@ -33,7 +38,7 @@ def main():
     args = parser.parse_args()
 
     # Opening JSON file and loading the data
-    # into the variable data
+    # into the variable
     with open(args.input_file, encoding="utf-8") as json_file:
         data = json.load(json_file)
 
@@ -65,7 +70,6 @@ def main():
                         center_y = ymin + (height / 2)
                         
                         # Separate detections onto different lines
-                        # Dont create text file if no detections
                         text_file.seek(0)
                         first_char = text_file.read(1)
                         if not first_char:
@@ -74,7 +78,6 @@ def main():
                         else:
                             line = '\n0 ' + str(center_x) + ' ' + str(center_y) + ' ' + str(width) + ' ' + str(height)
                             text_file.write(line)
-
 
 
 
