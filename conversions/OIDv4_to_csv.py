@@ -1,11 +1,11 @@
-"""Converts OIDv4 annotations to match CSV format
+"""Converts OIDv4 annotations to match AutoML CSV format
 
  CSV format needed for the object_detector.Dataloader.from_csv()
  method as used in this article:
  https://www.tensorflow.org/lite/models/modify/model_maker/object_detection
 
  Run as:
-     python megadetector_json_to_csv.py output.json new_output.csv \
+     python OIDv4_to_csv.py /home/user/label_folder/ new_output.csv \
      /home/user/image_folder/
 """
 
@@ -20,16 +20,15 @@ from PIL import Image
 def main():
     """Converts OIDv4 annotation data and writes to CSV
 
-    Converts the OIDv4 denormalized xyxy bbox data
-    to normalized xyxy format and writes the
-    data to a CSV in the proper format [set, class, file, xmin, ymin,
-    '', '', xmax, ymax, '', ''].
+    Converts the OIDv4 denormalized xyxy bbox data to normalized 
+    xyxy format and writes the data to a CSV in the proper
+    format [set, class, file, xmin, ymin, '', '', xmax, ymax, '', ''].
     """
     # pylint: disable=locally-disabled, too-many-locals
     # Get command line arguments when running program
     parser = argparse.ArgumentParser()
     parser.add_argument("label_folder_path", type=str,
-                        help="path for the folder containing txt input files")
+                        help="path to folder containing txt input files")
     parser.add_argument("output_file", type=str,
                         help="filepath for the CSV output file")
     parser.add_argument("image_folder_path", type=str,
@@ -40,12 +39,13 @@ def main():
         csv_writer = csv.writer(data_file)
 
 
-        # Go to the label folder path
+        # Go to the label folder path and gather all text files
         all_files = os.listdir(args.label_folder_path)
         txt_files = list(filter(lambda x: x[-4:] == '.txt', all_files))
 
+        # For each text file change the annotations and write to csv
         for txt in txt_files:
-            with open(args.label_folder_path + txt, 'rt') as current_file:
+            with open(args.label_folder_path + txt, 'r') as current_file:
                 img_name = txt[:-4] + '.jpg'
                 img = PIL.Image.open(args.image_folder_path + img_name)
 
@@ -70,6 +70,7 @@ def main():
                 elif rand_num <= 100:
                     set_type = 'TEST'
 
+                # For each detection change to normalized xyxy
                 for element in data:
                     detections = element.split()
 
