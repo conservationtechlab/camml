@@ -11,9 +11,9 @@
 
 import csv
 import os
-import PIL
 import argparse
 import random
+import PIL
 
 
 def main():
@@ -43,7 +43,8 @@ def main():
 
         # For each text file change the annotations and write to csv
         for txt in txt_files:
-            with open(args.label_folder_path + txt, 'r') as current_file:
+            with open(args.label_folder_path + txt,
+                      'r', encoding='utf-8') as current_file:
                 img_name = txt[:-4] + '.jpg'
                 img = PIL.Image.open(args.image_folder_path + img_name)
 
