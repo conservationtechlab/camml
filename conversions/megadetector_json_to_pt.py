@@ -1,9 +1,5 @@
 """Converts megadetector output JSON file to match Yolov8 pytortch txt format
 
- CSV format needed for the object_detector.Dataloader.from_csv()
- method as used in this article:
- https://www.tensorflow.org/lite/models/modify/model_maker/object_detection
-
  Run as:
      python megadetector_json_to_csv.py output.json new_output.csv \
      /home/user/image_folder/
@@ -78,20 +74,6 @@ def main():
                         else:
                             line = '\n0 ' + str(center_x) + ' ' + str(center_y) + ' ' + str(width) + ' ' + str(height)
                             text_file.write(line)
-
-
-    # Create new yaml file that contains image directory and class info
-    new_yaml = """
-train: /home/ericescareno/OIDv4_ToolKit/OID/Dataset/train/images
-val: /home/ericescareno/OIDv4_ToolKit/OID/Dataset/validation/images  
-  
-nc: 1
-names: ['Cat']
-"""
-    content = yaml.safe_load(new_yaml)
-
-    with open('data.yaml', 'w') as file:
-        yaml.dump(content, file, sort_keys=False)
 
 
 
