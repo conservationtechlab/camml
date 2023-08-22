@@ -13,7 +13,8 @@ import csv
 import os
 import argparse
 import random
-import PIL
+
+from PIL import Image
 
 
 def main():
@@ -46,7 +47,7 @@ def main():
             with open(args.label_folder_path + txt,
                       'r', encoding='utf-8') as current_file:
                 img_name = txt[:-4] + '.jpg'
-                img = PIL.Image.open(args.image_folder_path + img_name)
+                img = Image.open(args.image_folder_path + img_name)
 
                 width, height = img.size
 
