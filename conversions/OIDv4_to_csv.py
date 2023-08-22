@@ -15,12 +15,11 @@ import PIL
 import argparse
 import random
 
-from PIL import Image
 
 def main():
     """Converts OIDv4 annotation data and writes to CSV
 
-    Converts the OIDv4 denormalized xyxy bbox data to normalized 
+    Converts the OIDv4 denormalized xyxy bbox data to normalized
     xyxy format and writes the data to a CSV in the proper
     format [set, class, file, xmin, ymin, '', '', xmax, ymax, '', ''].
     """
@@ -38,7 +37,6 @@ def main():
     with open(args.output_file, 'w', encoding='utf-8') as data_file:
         csv_writer = csv.writer(data_file)
 
-
         # Go to the label folder path and gather all text files
         all_files = os.listdir(args.label_folder_path)
         txt_files = list(filter(lambda x: x[-4:] == '.txt', all_files))
@@ -50,14 +48,12 @@ def main():
                 img = PIL.Image.open(args.image_folder_path + img_name)
 
                 width, height = img.size
-                
+
                 data = current_file.read()
-                lines = data.count('\n')
 
                 data = data.split('\n')
                 data = data[:-1]
 
-                
                 # Randomly set 80% of images to train,
                 # 10% to validation, and 10% to test. Currently all set
                 rand_num = random.randint(1, 100)
@@ -78,7 +74,7 @@ def main():
                     detections[2] = round(float(detections[2]) / height, 4)
                     detections[3] = round(float(detections[3]) / width, 4)
                     detections[4] = round(float(detections[4]) / height, 4)
-                    
+
                     csv_writer.writerow([set_type,
                                          args.image_folder_path + img_name,
                                          detections[0], detections[1],
