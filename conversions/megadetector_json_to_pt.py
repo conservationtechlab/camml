@@ -1,7 +1,7 @@
 """Converts megadetector output JSON file to match Yolov8 pytortch txt format
 
 A .yaml file with image directory and class information is needed to
-train a Yolov8 model. The yaml file will need a format similar to 
+train a Yolov8 model. The yaml file will need a format similar to
 the one described in the "EXAMPLE" section here:
 https://roboflow.com/formats/yolov8-pytorch-txt
 
@@ -14,12 +14,7 @@ detections with a confidence below this value.
 """
 
 import json
-import csv
-import os
 import argparse
-import random
-import yaml
-import shutil
 
 
 def main():
@@ -36,8 +31,9 @@ def main():
                         help="filepath for the JSON input file")
     parser.add_argument("output_folder", type=str,
                         help="filepath for the txt output files")
-    parser.add_argument("confidence", type=float,
-                        help="confidence threshold for megadetector detections")
+    parser.add_argument("conf", type=float,
+                        help="confidence threshold for megadetector \
+                        detections")
     args = parser.parse_args()
 
     # Opening JSON file and loading the data
@@ -47,11 +43,9 @@ def main():
 
     image_data = data['images']
 
-
-
     # For loop get to each image file name
     for img in image_data:
-        
+
         # First check if file contains detections
         filename = img['file'][:-3] + 'txt'
         if 'failure' in img.keys():
@@ -62,8 +56,10 @@ def main():
                 for i in range(0, len(img['detections'])):
                     # Megadetector uses 3 categories 1-animal, 2-person,
                     # 3-vehicle, only the animal detections are needed
-                    if img['detections'][i]['category'] == '1' and img['detections'][i]['conf'] >= args.confidence:
-                        # Convert xmin, ymin, width, height json format to centerx, centery, width, height yolo format
+                    if (img['detections'][i]['category'] == '1'
+                            and img['detections'][i]['conf'] >= args.conf):
+                        # Convert xmin, ymin, width, height json format
+                        # to centerx, centery, width, height yolo format
                         xmin = img['detections'][i]['bbox'][0]
                         ymin = img['detections'][i]['bbox'][1]
                         width = img['detections'][i]['bbox'][2]
@@ -71,18 +67,20 @@ def main():
 
                         center_x = xmin + (width / 2)
                         center_y = ymin + (height / 2)
-                        
+
                         # Separate detections onto different lines
                         text_file.seek(0)
                         first_char = text_file.read(1)
                         if not first_char:
-                            line = '0 ' + str(center_x) + ' ' + str(center_y) + ' ' + str(width) + ' ' + str(height)
+                            line = '0 ' + str(center_x) + ' ' \
+                                   + str(center_y) + ' ' + str(width) \
+                                   + ' ' + str(height)
                             text_file.write(line)
                         else:
-                            line = '\n0 ' + str(center_x) + ' ' + str(center_y) + ' ' + str(width) + ' ' + str(height)
+                            line = '\n0 ' + str(center_x) + ' ' \
+                                + str(center_y) + ' ' + str(width) \
+                                + ' ' + str(height)
                             text_file.write(line)
-
-
 
 
 if __name__ == "__main__":
