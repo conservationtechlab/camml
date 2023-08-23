@@ -52,7 +52,8 @@ def main():
             print(img['file'] + ' failed to access.\n')
         else:
             # Create a new text file for each image
-            with open(args.output_folder + filename, 'w+') as text_file:
+            with open(args.output_folder + filename, 'w+',
+                      encoding="utf-8") as text_file:
                 for i in range(0, len(img['detections'])):
                     # Megadetector uses 3 categories 1-animal, 2-person,
                     # 3-vehicle, only the animal detections are needed
