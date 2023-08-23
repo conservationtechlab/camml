@@ -5,9 +5,12 @@ train a Yolov8 model. The yaml file will need a format similar to
 the one described in the "EXAMPLE" section here:
 https://roboflow.com/formats/yolov8-pytorch-txt
 
+A confidence value from 0 to 1, such as 0.9, is needed to filter
+detections with a confidence below this value.
+
  Run as:
-     python megadetector_json_to_csv.py output.json new_output.csv \
-     /home/user/image_folder/
+     python megadetector_json_to_pt.py output.json \
+     /home/user/output_folder/ 0.9
 """
 
 import json
@@ -23,8 +26,8 @@ def main():
     """Converts JSON data and writes to txt files
 
     Converts the JSON xywh bbox data to xyxy format and writes the
-    data to txt files in the proper format [set, class, file, xmin, ymin,
-    '', '', xmax, ymax, '', ''].
+    data to txt files in the proper format
+    (class_id centerx centery width height).
     """
     # pylint: disable=locally-disabled, too-many-locals
     # Get command line arguments when running program
