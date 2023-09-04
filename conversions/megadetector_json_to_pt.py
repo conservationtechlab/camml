@@ -69,6 +69,11 @@ def main():
                         center_x = xmin + (width / 2)
                         center_y = ymin + (height / 2)
 
+                        center_x = round(center_x, 8)
+                        center_y = round(center_y, 8)
+                        width = round(width, 8)
+                        height = round(height, 8)
+
                         # Separate detections onto different lines
                         text_file.seek(0)
                         first_char = text_file.read(1)
