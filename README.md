@@ -34,7 +34,9 @@ Then save, exit and run:
 This will reload your terminal and you should now be able to activate the enviroment with:  
 `conda activate cameratraps-detector`  
 You are now be able to run MegaDetector on a given set of images with the following code:  
-`python detection/run_detector_batch.py /home/user/megadetector/md_v5a.0.0.pt /home/user/image_folder/ /home/user/megadetector/test_output.json --output_relative_filenames --recursive --checkpoint_frequency 10000`  
+```
+python detection/run_detector_batch.py /home/user/megadetector/md_v5a.0.0.pt /home/user/image_folder/ /home/user/megadetector/test_output.json --output_relative_filenames --recursive --checkpoint_frequency 10000
+```  
 This will produce your `test_output.json` output file and you can now proceed with using these detections to train a TFLite model. Make sure to deactivate your environment before moving on to the next steps:  
 `conda deactivate`
 
@@ -57,7 +59,9 @@ We'll want to create a new virtual environment to download the packages needed f
 ## Compile the TFLite model for the Edge TPU
 You may need a new virtual environment to compile this model for the Coral.  
 `curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -`  
-`echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list`  
+```
+echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list
+```  
 `sudo apt-get update`  
 `sudo apt-get install edgetpu-compiler`  
   
@@ -77,7 +81,9 @@ A labels.txt file will need to be made containing class names such as:
 ```  
 
 Run the Edge compiled TFLite model on the Coral:  
-`python3 /pycoral/examples/detect_image.py --model model_edgetpu.tflite --labels labels.txt --input animal.jpg --output animal_result.jpg`  
+```
+python3 /pycoral/examples/detect_image.py --model model_edgetpu.tflite --labels labels.txt --input animal.jpg --output animal_result.jpg
+```  
 
 If this step fails, you may also need to install the TFLite runtime associated with your Linux OS and Python versions.
 
