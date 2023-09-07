@@ -25,27 +25,27 @@ conda env create --file environment-detector.yml
 conda activate cameratraps-detector
 export PYTHONPATH="$PYTHONPATH:$HOME/git/CameraTraps:$HOME/git/ai4eutils:$HOME/git/yolov5"
 ```
-You should now see "(cameratraps-detector)" instead of "(base)" at your command prompt. Now we'll add the line to update our PYTHONPATH to our .bashrc file. Open your .bashrc file in an editor, such as emacs.
-`emacs ~/.bashrc`
-Add this line to the end of your .bashrc file:
-`export PYTHONPATH="$PYTHONPATH:$HOME/git/CameraTraps:$HOME/git/ai4eutils:$HOME/git/yolov5"`
-Then save, exit and run:
-`source ~/.bashrc`
-This will reload your terminal and you should now be able to activate the enviroment with:
-`conda activate cameratraps-detector`
-You are now be able to run MegaDetector on a given set of images with the following code:
-`python detection/run_detector_batch.py /home/user/megadetector/md_v5a.0.0.pt /home/user/image_folder/ /home/user/megadetector/test_output.json --output_relative_filenames --recursive --checkpoint_frequency 10000`
-This will produce your `test_output.json` output file and you can now proceed with using these detections to train a TFLite model. Make sure to deactivate your environment before moving on to the next steps:
+You should now see "(cameratraps-detector)" instead of "(base)" at your command prompt. Now we'll add the line to update our PYTHONPATH to our .bashrc file. Open your .bashrc file in an editor, such as emacs.  
+`emacs ~/.bashrc`  
+Add this line to the end of your .bashrc file:  
+`export PYTHONPATH="$PYTHONPATH:$HOME/git/CameraTraps:$HOME/git/ai4eutils:$HOME/git/yolov5"`  
+Then save, exit and run:  
+`source ~/.bashrc`  
+This will reload your terminal and you should now be able to activate the enviroment with:  
+`conda activate cameratraps-detector`  
+You are now be able to run MegaDetector on a given set of images with the following code:  
+`python detection/run_detector_batch.py /home/user/megadetector/md_v5a.0.0.pt /home/user/image_folder/ /home/user/megadetector/test_output.json --output_relative_filenames --recursive --checkpoint_frequency 10000`  
+This will produce your `test_output.json` output file and you can now proceed with using these detections to train a TFLite model. Make sure to deactivate your environment before moving on to the next steps:  
 `conda deactivate`
 
 ## Install packages
 
 `sudo apt -y install libportaudio2`  
-We'll want to create a new virtual environment to download the packages needed for training.
+We'll want to create a new virtual environment to download the packages needed for training.  
 `pip install --use-deprecated=legacy-resolver tflite-model-maker`  
 `pip install pycocotools`  
 `pip install opencv-python-headless==4.1.2.30`  
-`pip uninstall -y tensorflow && pip install tensorflow==2.8.0`
+`pip uninstall -y tensorflow && pip install tensorflow==2.8.0`  
 `pip install humanfriendly`
 
 ## Steps for training model
