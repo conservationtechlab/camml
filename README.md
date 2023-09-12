@@ -35,7 +35,7 @@ This will reload your terminal and you should now be able to activate the enviro
 `conda activate cameratraps-detector`  
 You are now be able to run MegaDetector on a given set of images with the following code:  
 ```
-python detection/run_detector_batch.py /home/user/megadetector/md_v5a.0.0.pt /home/user/image_folder/ /home/user/megadetector/test_output.json --output_relative_filenames --recursive --checkpoint_frequency 10000
+python detection/run_detector_batch.py /home/user/megadetector/md_v5a.0.0.pt /home/user/image_folder/ /home/user/megadetector/test_output.json --recursive --checkpoint_frequency 10000
 ```  
 This will produce your `test_output.json` output file and you can now proceed with using these detections to train a TFLite model. Make sure to deactivate your environment before moving on to the next steps:  
 `conda deactivate`
@@ -53,9 +53,19 @@ We'll want to create a new virtual environment to download the packages needed f
 ## Steps for training model
 
 1. Run megadetector on a desired set of images with `git/CameraTraps/run_detector_batch.py`. If you've completed the "Setting up MegaDetector steps you should be ready to go. This will produce an output `.json` file which contains the bounded box image data. The detections are made in 3 classes 1-animal, 2-person, and 3-vehicle.  
-2. Use the `megadetector_json_to_csv.py` script on your megadetector output `.json` file to produce a `.csv` file in the appropriate format for training the object detector. The 'person' and 'vehicle' detections will be excluded and the 'animal' class will be changed to the folder name where the images came from. For example: Any 'animal' detections on images from the directory /home/usr/images/Cat/ will change to 'Cat' detections in the CSV file. Since megadetector's detections each come with their own confidence score you can set the confidence argument to a value between 0 and 1, such as 0.9, to only include detections which have a confidence greater than or equal to this value.  
-3. Use the `obj_det_train.py` script to train the model and export to TFLite. You should now see a `model.tflite` file in your current directory.
-
+2. Use the `megadetector_json_to_csv.py` script on your megadetector output `.json` file to produce a `.csv` file in the appropriate format for training the object detector. The 'person' and 'vehicle' detections will be excluded and the 'animal' class will be changed to the folder name where the images came from. For example: Any 'animal' detections on images from the directory /home/usr/images/Cat/ will change to 'Cat' detections in the CSV file. Since megadetector's detections each come with their own confidence score you can set the confidence argument to a value between 0 and 1, such as 0.9, to only include detections which have a confidence greater than or equal to this value. To run the script enter:    
+```
+python megadetector_json_to_csv.py test_output.json test_output.csv 0.9
+```
+  
+3. Use the `obj_det_train.py` script to train the model and export to TFLite. You should now see a `model.tflite` file in your current directory. To run the script enter:
+```
+python obj_det_train.py test_output.csv
+```  
+You can now deactivate your virtual environment you used for training with:
+`deactivate vir_env`  
+where "vir_env" is replaced by your virtual environment's name.  
+  
 ## Compile the TFLite model for the Edge TPU
 You may need a new virtual environment to compile this model for the Coral.  
 `curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -`  
