@@ -5,6 +5,20 @@ A package of ML components for CTL field camera systems.
 
 The `obj_det_train.py` file uses transfer learning to retrain an EfficientDet-Lite object detection model using a given set of images and their corresponding CSV file containing bounded box image data. This model is exported as a TFLite model so it can then be compiled and deployed for a Coral Edge TPU. The steps for this process are as follows:
 
+## Setting up Open Images Downloaderv4
+Open Images Downloaderv4 can be used to download sets of images by class, amount, and set type. This is a good tool to get your training and validation images as well as ground truth bounding box annotations. In particular, the conversion scripts will take the true validation annotations rather than try to guess them with MegaDetector. This makes our final evaluation metrics more trustworthy. You may need a new virtual environment for this step. To begin, enter into your command line:  
+```
+git clone https://github.com/EscVM/OIDv4_ToolKit.git   
+cd OIDv4_ToolKit   
+pip install -r requirements.txt  
+```  
+You can use OIDv4 to download images, for example:  
+```
+python main.py downloader --classes Cat Dog --type_csv train --limit 50  
+python main.py downloader --classes Cat Dog --type_csv validation --limit 50  
+```  
+When prompted enter "Y" to download the missing annotation file. You should now have 50 Cat and 50 Dog training images as well as 50 Cat and 50 Dog validation images in "/OIDv4_ToolKit/OID/Dataset/". Within your Cat and Dog folders will also be a "Label" folder with `.txt` annotation files for each image.
+
 ## Setting up MegaDetector
 
 The steps for setting up and using Megadetector are described [here](https://github.com/microsoft/CameraTraps/blob/main/megadetector.md). As the instructions can be subject to change we will also guide you through the instructions ourselves, as they were presented to us at the time. All instructions will assume you're using a Linux operating system.  
@@ -33,7 +47,7 @@ Then save, exit and run:
 `source ~/.bashrc`  
 This will reload your terminal and you should now be able to activate the enviroment with:  
 `conda activate cameratraps-detector`  
-You are now be able to run MegaDetector on a given set of images with the following code:  
+You are now able to run MegaDetector on a given set of images with the following code:  
 ```
 python detection/run_detector_batch.py /home/user/megadetector/md_v5a.0.0.pt /home/user/image_folder/ /home/user/megadetector/test_output.json --recursive --checkpoint_frequency 10000
 ```  
@@ -43,12 +57,12 @@ This will produce your `test_output.json` output file and you can now proceed wi
 ## Install packages
 
 `sudo apt -y install libportaudio2`  
-We'll want to create a new virtual environment to download the packages needed for training.  
+We'll want to create a new virtual environment to download the packages needed for training.(may work on one environment)
 `pip install --use-deprecated=legacy-resolver tflite-model-maker`  
 `pip install pycocotools`  
 `pip install opencv-python-headless==4.1.2.30`  
 `pip uninstall -y tensorflow && pip install tensorflow==2.8.0`  
-`pip install humanfriendly`
+#`pip install humanfriendly` (delete?)
 
 ## Steps for training model
 
@@ -95,7 +109,58 @@ Run the Edge compiled TFLite model on the Coral:
 python3 /pycoral/examples/detect_image.py --model model_edgetpu.tflite --labels labels.txt --input animal.jpg --output animal_result.jpg
 ```  
 
-If this step fails, you may also need to install the TFLite runtime associated with your Linux OS and Python versions.
+If this step fails, you may also need to install the TFLite runtime associated with your Linux OS and Python versions.  
+
+# Training custom Yolov8 models
+Yolov8 models use individual PyTorch `.txt` annotation files which are each associated with an image. These annotation files should be in a folder at the same level as the images folder such as "/home/user/project/images/" and "/home/user/project/labels/". You will need a `.yaml` file that contains the path to the train, validation, and test directories as well as the number of classes in your dataset and the class names. The conversion script `md_json_to_pt_val.py` will use the megadetector output file and the path to your validation images to create a folder structure with symlinked images and `.txt` files in the required format. It will also create the necessary  data.yaml file for training. For example:  
+```
+train: /home/user/yolov8_training_data/train/images  
+val: /home/user/yolov8_training_data/validation/images  
+#test: /home/user/yolov8_training_data/test/images	# test set is optional  
+
+nc: 2
+names: ['Cat', 'Dog']
+```  
+
+## Setting up Open Images Downloaderv4
+Follow the "Setting up Open Images Downloaderv4" steps as described in the "Training custom TFLite models" section.  
+
+## Setting up megadetector
+Follow the "Setting up megadetector" steps as described in the "Training custom TFLite models" section.  
+
+## Install packages
+You should create a new virtual environment before pip installing.  
+`pip install ultralytics`  
+
+## (Optional) Install MLops software
+If you want to visualize your training data and results you can use ClearML. You will have to create an account and verify your credentials, then any YOLOv8 training experiment ran in this terminal will be logged to your ClearML dashboard.  
+1. First create a ClearML account.  
+2. Once logged in go to "Settings" then "Workspace" and click on "create new credentials".  
+3. Then copy the information under "LOCAL PYTHON".  
+4. You can now enter in your terminal:  
+`clearml-init`  
+Then paste your credential information and your results should be automatically logged once you start training.  
+
+## Steps for training model
+1. Run megadetector on a desired set of images with `git/CameraTraps/run_detector_batch.py`. If you've completed the "Setting up MegaDetector steps you should be ready to go. We recommend running megadetector only on your training images to keep your test and validation sets untouched. This will produce an output `.json` file which contains the bounded box image data. The detections are made in 3 classes 1-animal, 2-person, and 3-vehicle.
+2. Rename your image folder to "images". It is important that your images are in an "images" folder and your annotation files in a "labels" folder. If these folders do not exist you will likely get a "no labels found" error or some other error.
+3. Create an empty "labels" folder in the same directory as each of your "images" folders. Megadetector's output will be converted into individual annotation files that will fill this folder.  
+4. Use the `megadetector_json_to_pt.py` script on your megadetector output `.json` file to produce PyTorch `.txt` files in the appropriate format for training the object detector. The 'person' and 'vehicle' detections will be excluded and each detection will have class number "0" representing whatever animal class you choose(fix script to take classes from file?). Since megadetector's detections each come with their own confidence score you can set the confidence argument to a value between 0 and 1, such as 0.9, to only include detections which have a confidence greater than or equal to this value. To run the script enter:    
+```
+python megadetector_json_to_pt.py test_output.json /home/user/project/train/labels/  0.9
+```
+(fix script to work with train and validation at once?)
+  
+5. You will need a YOLOv8 model file which can be downloaded [here](https://docs.ultralytics.com/models/yolov8/#supported-tasks). These instructions will use the `yolov8n.pt` model. Your model file and `data.yaml` file should both be in your current working directory.  
+
+Enter in your terminal:  
+```
+yolo task=detect mode=train model=yolov8n.pt imgsz=1280 data=data.yaml epochs=50 batch=8 name=yolov8n_50e
+```  
+We use "task=detect" and "mode=train" to train an object detector. We set "model=yolov8n.pt" which is the smallest and probably least accurate model but you can use any model version. Standard image size is 640 but training with "imgsz=1280" can give better results on images with many small objects that you want to classify. The "data.yaml" file should be made as described above. Epochs and batch size can affect training time and AP results. For best practices see [here](https://docs.ultralytics.com/yolov5/tutorials/tips_for_best_training_results/#training-settings). Training may take a few hours or longer depending on your hardware.
+6. When training is complete your results should be saved in "runs/detect/yolov8n_50/" and your final trained model will be at "runs/detect/yolov8n_50e/weights/best.pt".
+
+## Test the model
 
 # Dependencies
 
