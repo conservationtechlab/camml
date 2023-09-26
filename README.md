@@ -111,8 +111,8 @@ python3 /pycoral/examples/detect_image.py --model model_edgetpu.tflite --labels 
 
 If this step fails, you may also need to install the TFLite runtime associated with your Linux OS and Python versions.  
 
-# Training custom Yolov8 models
-Yolov8 models use individual PyTorch `.txt` annotation files which are each associated with an image. These annotation files should be in a folder at the same level as the images folder such as "/home/user/project/images/" and "/home/user/project/labels/". You will need a `.yaml` file that contains the path to the train, validation, and test directories as well as the number of classes in your dataset and the class names. The conversion script `md_json_to_pt_val.py` will use the megadetector output file and the path to your validation images to create a folder structure with symlinked images and `.txt` files in the required format. It will also create the necessary  data.yaml file for training. For example:  
+# Training custom YOLOv8 models
+Yolov8 models use individual PyTorch `.txt` annotation files which are each associated with an image. These annotation files should be in a folder at the same level as the images folder such as "/home/user/project/images/" and "/home/user/project/labels/". You will need a `.yaml` file that contains the path to the train, validation, and test directories as well as the number of classes in your dataset and the class names. The conversion script `megadetector_json_to_pt.py` will use the megadetector output file and the path to your validation images to create a folder structure with symlinked images and `.txt` files in the required format. It will also create the necessary  data.yaml file for training. For example:  
 ```
 train: /home/user/yolov8_training_data/train/images  
 val: /home/user/yolov8_training_data/validation/images  
@@ -142,25 +142,23 @@ If you want to visualize your training data and results you can use ClearML. You
 Then paste your credential information and your results should be automatically logged once you start training.  
 
 ## Steps for training model
-1. Run megadetector on a desired set of images with `git/CameraTraps/run_detector_batch.py`. If you've completed the "Setting up MegaDetector steps you should be ready to go. We recommend running megadetector only on your training images to keep your test and validation sets untouched. This will produce an output `.json` file which contains the bounded box image data. The detections are made in 3 classes 1-animal, 2-person, and 3-vehicle.
-2. Rename your image folder to "images". It is important that your images are in an "images" folder and your annotation files in a "labels" folder. If these folders do not exist you will likely get a "no labels found" error or some other error.
-3. Create an empty "labels" folder in the same directory as each of your "images" folders. Megadetector's output will be converted into individual annotation files that will fill this folder.  
-4. Use the `megadetector_json_to_pt.py` script on your megadetector output `.json` file to produce PyTorch `.txt` files in the appropriate format for training the object detector. The 'person' and 'vehicle' detections will be excluded and each detection will have class number "0" representing whatever animal class you choose(fix script to take classes from file?). Since megadetector's detections each come with their own confidence score you can set the confidence argument to a value between 0 and 1, such as 0.9, to only include detections which have a confidence greater than or equal to this value. To run the script enter:    
+1. Run megadetector on a desired set of images with `git/CameraTraps/run_detector_batch.py`. If you've completed the "Setting up MegaDetector steps you should be ready to go. We recommend running megadetector only on your training images to keep your test and validation sets untouched. This will produce an output `.json` file which contains the bounded box image data. The detections are made in 3 classes 1-animal, 2-person, and 3-vehicle.  
+2. Use the `megadetector_json_to_pt.py` script on your megadetector output `.json` file to produce PyTorch `.txt` files in the appropriate format for training the object detector. The script will create a "yolov8_training_data/train/images" and "yolov8_training_data/train/labels" directory structure at your current directory level. Similarly, a "yolov8_training_data/validation/images" and "yolov8_training_data/validation/labels/" will also be created. The megadetector output will be converted and stored in the "train" folder while the given validation data will be converted and stored in the "validation" folder. Symlinks of each image will be created so our Yolo training works without issue. The 'person' and 'vehicle' detections will be excluded and each detection will be given a class number to match the classes in the `data.yaml` file. Since megadetector's detections each come with their own confidence score you can set the confidence argument to a value between 0 and 1, such as 0.9, to only include detections which have a confidence greater than or equal to this value. To run the script enter:    
 ```
-python megadetector_json_to_pt.py test_output.json /home/user/project/train/labels/  0.9
+python megadetector_json_to_pt.py test_output.json /home/user/project/validation/  0.9
 ```
-(fix script to work with train and validation at once?)
   
-5. You will need a YOLOv8 model file which can be downloaded [here](https://docs.ultralytics.com/models/yolov8/#supported-tasks). These instructions will use the `yolov8n.pt` model. Your model file and `data.yaml` file should both be in your current working directory.  
+3. A YOLOv8 model file will automatically be downloaded when you begin training, or you can download the model file yourself [here](https://docs.ultralytics.com/models/yolov8/#supported-tasks). These instructions will use the `yolov8n.pt` model. Your model file and `data.yaml` file should both be in your current working directory.  
 
 Enter in your terminal:  
 ```
 yolo task=detect mode=train model=yolov8n.pt imgsz=1280 data=data.yaml epochs=50 batch=8 name=yolov8n_50e
 ```  
-We use "task=detect" and "mode=train" to train an object detector. We set "model=yolov8n.pt" which is the smallest and probably least accurate model but you can use any model version. Standard image size is 640 but training with "imgsz=1280" can give better results on images with many small objects that you want to classify. The "data.yaml" file should be made as described above. Epochs and batch size can affect training time and AP results. For best practices see [here](https://docs.ultralytics.com/yolov5/tutorials/tips_for_best_training_results/#training-settings). Training may take a few hours or longer depending on your hardware.
-6. When training is complete your results should be saved in "runs/detect/yolov8n_50/" and your final trained model will be at "runs/detect/yolov8n_50e/weights/best.pt".
+We use "task=detect" and "mode=train" to train an object detector. We set "model=yolov8n.pt" which is the smallest and probably least accurate model but you can use any model version. Standard image size is 640 but training with "imgsz=1280" can give better results on images with many small objects that you want to classify. The "data.yaml" file should be made as described above. Epochs and batch size can affect training time and AP results. For best practices see [here](https://docs.ultralytics.com/yolov5/tutorials/tips_for_best_training_results/#training-settings). Training may take a few hours or longer depending on your hardware.  
+4. When training is complete your results should be saved in "runs/detect/yolov8n_50/" and your final trained model will be at "runs/detect/yolov8n_50e/weights/best.pt".
 
 ## Test the model
+To test the model download a class image from google and use `test_yolo_dnn.py` file with your model filename and image filename to convert the `.pt` model file to a `.onnx` model file and run inference on the image. For example:
 
 # Dependencies
 
