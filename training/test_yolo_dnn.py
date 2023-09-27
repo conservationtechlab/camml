@@ -1,11 +1,27 @@
+"""Converts YOLOv8 .pt model file to .onnx model file and tests inference
+
+This script takes 3 command line arguments model_file, image_file,
+and yaml_file. The model_file argument should be given the path
+to the .pt model file you've trained. The image_file argument
+should be given the path to the image file you plan to test inference
+on. The yaml_file argument should be given the path to the data.yaml
+file you used to train your YOLOv8 model with, so it can extract the
+class names.
+
+Run as:
+    python test_yolo_dnn.py /home/usr/yolo_model.pt \
+    /home/usr/image_file.jpg /home/usr/data.yaml
+"""
+
+import argparse
+import os
 import cv2
 from ultralytics import YOLO
 import numpy as np
 from PIL import Image
-import argparse
-import os
 import yaml
 
+# pylint: disable=I1101, E1101
 # handle command line arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("model_file", type=str,
@@ -38,7 +54,7 @@ NMS_THRESHOLD = 0.4
 CONFIDENCE_THRESHOLD = 0.4
 
 # Define yolov8 classes
-with open(args.yaml_file, 'r') as file:
+with open(args.yaml_file, 'r', encoding="utf-8") as file:
     data = yaml.safe_load(file)
 CLASSES_YOLO = data['names']
 
@@ -53,7 +69,7 @@ preds = net.forward()
 preds = preds.transpose((0, 2, 1))
 
 # Extract output detection
-class_ids, confs, boxes = list(), list(), list()
+class_ids, confs, boxes = [], [], []
 
 image_height, image_width, _ = image.shape
 x_factor = image_width / INPUT_WIDTH
@@ -68,7 +84,7 @@ for i in range(rows):
     classes_score = row[4:]
     _, _, _, max_idx = cv2.minMaxLoc(classes_score)
     class_id = max_idx[1]
-    if (classes_score[class_id] > .25):
+    if classes_score[class_id] > .25:
         confs.append(conf)
         label = CLASSES_YOLO[int(class_id)]
         class_ids.append(label)
@@ -83,7 +99,7 @@ for i in range(rows):
         box = np.array([left, top, width, height])
         boxes.append(box)
 
-r_class_ids, r_confs, r_boxes = list(), list(), list()
+r_class_ids, r_confs, r_boxes = [], [], []
 
 indexes = cv2.dnn.NMSBoxes(boxes, confs, 0.25, 0.45)
 for i in indexes:
