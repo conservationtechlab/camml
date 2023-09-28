@@ -90,9 +90,7 @@ def main():
                         set_type = 'TEST'
 
                     # Get the class name from the image file name
-                    slash = img['file'].rfind('/')
-                    prev_slash = img['file'][0:slash - 1].rfind('/')
-                    category = img['file'][prev_slash + 1:slash]
+                    category = img['file'].strip('/').split('/')[-2]
 
                     # Megadetector uses 3 categories 1-animal, 2-person,
                     # 3-vehicle, only the animal detections are needed
