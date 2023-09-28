@@ -5,6 +5,44 @@ A package of ML components for CTL field camera systems.
 
 The `obj_det_train.py` file uses transfer learning to retrain an EfficientDet-Lite object detection model using a given set of images and their corresponding CSV file containing bounded box image data. This model is exported as a TFLite model so it can then be compiled and deployed for a Coral Edge TPU. The steps for this process are as follows:
 
+## Setting up virtualenvwrapper environments
+Following the training steps may require up to 3 virtual environments to keep each process working. To setup virtualenvwrapper:  
+```
+sudo pip install virtualenvwrapper
+```  
+Then edit your ~/.bashrc file with a text editor such as emacs using:  
+```
+emacs ~/.bashrc
+```  
+At the end of the file add the following lines:  
+```
+export WORKON_HOME=~/Envs  
+export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3  
+source /usr/local/bin/virtualenvwrapper.sh  
+```  
+Then run the script with:  
+`source ~/.bashrc`  
+This will reset your terminal and you can now use the commands:  
+```
+mkdir -p $WORKON_HOME  
+echo $WORKON_HOME  
+source /usr/local/bin/virtualenvwrapper.sh  
+```  
+You should now be able to create new virtual environments, for example a "camml_training" environment using:  
+`mkvirtualenv camml_training`  
+This will allow you to quickly activate or switch to environments with:  
+`workon camml_training`  
+And deactivate the environment with:  
+`deactivate`
+Make sure your environment is deactivated before you set up your Anaconda environments.  
+
+## Setting up Anaconda environments
+Following the training steps will require at least one Anaconda environment for using Megadetector. To setup Anaconda we will use the same steps described [here](https://docs.anaconda.com/free/anaconda/install/linux/). First open your browser and download the Anaconda installer for Linux [here](https://www.anaconda.com/download/#linux). Open your terminal and enter:  
+`bash ~/Downloads/Anaconda3-2023.03-1-Linux-x86_64.sh`  
+Where "Downloads" is replaced by your path to the file and the `.sh` filename matches the one you downloaded. Next, press Enter to review the license agreement and press and hold Enter to scroll. Enter "yes" to agree to the license agreement. You can then use Enter to accept the default install location or enter a filepath to specify a different install location. The installation will begin which may take a few minutes. When finished you will be prompted to enter "yes" to initialize conda. You can now either close and reopen your terminal or use `source ~/.bashrc` to refresh the terminal. You should see "(base)" at your command line and you should be ready for the MegaDetector setup steps.  
+Use the following command to deactivate your conda environment:  
+`conda deactivate base`
+
 ## Setting up Open Images Downloaderv4
 Open Images Downloaderv4 can be used to download sets of images by class, amount, and set type. This is a good tool to get your training and validation images as well as ground truth bounding box annotations. In particular, the conversion scripts will take the true validation annotations rather than try to guess them with MegaDetector. This makes our final evaluation metrics more trustworthy. You may need a new virtual environment for this step. To begin, enter into your command line:  
 ```
