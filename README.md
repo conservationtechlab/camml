@@ -33,7 +33,7 @@ You should now be able to create new virtual environments, for example a "camml_
 This will allow you to quickly activate or switch to environments with:  
 `workon camml_training`  
 And deactivate the environment with:  
-`deactivate`
+`deactivate`  
 Make sure your environment is deactivated before you set up your Anaconda environments.  
 
 ## Setting up Anaconda environments
