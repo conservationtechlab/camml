@@ -15,7 +15,6 @@
 
 import json
 import csv
-import os
 import argparse
 import random
 
@@ -34,8 +33,6 @@ def main():
                         help="filepath for the JSON input file")
     parser.add_argument("output_file", type=str,
                         help="filepath for the CSV output file")
-    parser.add_argument("image_folder_path", type=str,
-                        help="path to the image folder")
     parser.add_argument("conf", type=float,
                         help="confidence threshold")
     parser.add_argument("--include",
@@ -57,8 +54,7 @@ def main():
 
         for img in image_data:
             # Set the file path
-            image_path = os.path.join(args.image_folder_path,
-                                      img['file'])
+            image_path = img['file']
 
             if 'failure' in img.keys():
                 print(img['file'] + ' failed to access.\n')
@@ -94,8 +90,7 @@ def main():
                         set_type = 'TEST'
 
                     # Get the class name from the image file name
-                    slash = img['file'].find('/')
-                    category = img['file'][0:slash]
+                    category = img['file'].strip('/').split('/')[-2]
 
                     # Megadetector uses 3 categories 1-animal, 2-person,
                     # 3-vehicle, only the animal detections are needed
