@@ -10,7 +10,7 @@ class names.
 
 Run as:
     python test_yolo_dnn.py /home/usr/yolo_model.pt \
-    /home/usr/image_file.jpg /home/usr/data.yaml
+    /home/usr/data.yaml /home/usr/image_file.jpg
 """
 
 import argparse
@@ -26,10 +26,10 @@ import yaml
 ap = argparse.ArgumentParser()
 ap.add_argument("model_file", type=str,
                 help="file path for the .pt model file")
-ap.add_argument("image_file", type=str,
-                help="file path for the test image")
 ap.add_argument("yaml_file", type=str,
                 help="file path for the data.yaml file")
+ap.add_argument("image_file", type=str,
+                help="file path for the test image")
 args = ap.parse_args()
 
 model = YOLO(args.model_file)
