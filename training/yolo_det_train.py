@@ -1,4 +1,4 @@
-""" Trains a YOLOv8 model with the default parameters.
+""" Trains a YOLOv8 model with default parameters.
 
 MODEL can be set to yolov8s.pt, yolov8m.pt, yolov8l.pt, or yolov8x.pt.
 
@@ -34,7 +34,7 @@ NAME = 'yolov8n_custom'
 model = YOLO(MODEL)
 
 # Training
-results = model.train(
+model.train(
    data=DATA,
    imgsz=IMAGE_SIZE,
    epochs=EPOCHS,
