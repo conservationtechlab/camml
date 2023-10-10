@@ -24,6 +24,7 @@ import yaml
 
 from PIL import Image
 
+
 def main():
     """Converts JSON data and writes to txt files
 
@@ -67,19 +68,13 @@ def main():
 
     # For loop get to each image file name
     for img in image_data:
-        # Get image folder path
-        end = img['file'].rfind('/')
-        prev = img['file'][:end].rfind('/')
-        image_folder = img['file'][:prev]
-
         # Symlink all images to new location
         last_slash = img['file'].rfind('/')
         img_filename = img['file'][last_slash + 1:]
-        if os.path.exists(train_img_path + img_filename) == False:
+        if os.path.exists(train_img_path + img_filename) is False:
             os.symlink(img['file'], train_img_path + img_filename)
-        
+
         # First check if file contains detections
-        #last_slash = img['file'].rfind('/')
         filename = img['file'][last_slash + 1:-3] + 'txt'
         if 'failure' in img.keys():
             print(img['file'] + ' failed to access.\n')
@@ -115,38 +110,37 @@ def main():
                         # Collect all class names and add them to list
                         if category not in class_list:
                             class_list.append(category)
-                        
+
                         # Assign class number to each detection
                         class_num = class_list.index(category)
-                        
+
                         # Separate detections onto different lines
                         text_file.seek(0)
                         first_char = text_file.read(1)
                         if not first_char:
                             line = str(class_num) + ' ' \
-                                   + str(center_x) + ' ' \
-                                   + str(center_y) + ' ' + str(width) \
-                                   + ' ' + str(height)
+                                       + str(center_x) + ' ' \
+                                       + str(center_y) + ' ' + str(width) \
+                                       + ' ' + str(height)
                             text_file.write(line)
                         else:
                             line = '\n' + str(class_num) + ' ' \
-                                + str(center_x) + ' ' \
-                                + str(center_y) + ' ' + str(width) \
-                                + ' ' + str(height)
+                                       + str(center_x) + ' ' \
+                                       + str(center_y) + ' ' + str(width) \
+                                       + ' ' + str(height)
                             text_file.write(line)
-
 
     # Go to the label folder path and gather all text files recursively
     txt_files = sorted(glob.glob(args.val_image_path + '/**/*.txt',
-                              recursive=True))
+                                 recursive=True))
     img_files = sorted(glob.glob(args.val_image_path + '/**/*.jpg',
-                              recursive=True))
+                                 recursive=True))
 
     # For each text file convert annotations and write to a new text file
     for (txt, img) in zip(txt_files, img_files):
         # Symlink all images to new folder
         last_slash = img.rfind('/')
-        if os.path.exists(val_img_path + img[last_slash + 1:]) == False:
+        if os.path.exists(val_img_path + img[last_slash + 1:]) is False:
             os.symlink(img, val_img_path + img[last_slash + 1:])
 
         # Read contents of each txt file
@@ -170,9 +164,11 @@ def main():
 
                 # Convert normalized xyxy to centerx, centery, width, height
                 # Need to round to certain amount of digits
-                bbox_width = (float(detections[3]) - float(detections[1])) / img_width
-                bbox_height = (float(detections[4]) - float(detections[2])) / img_height
-                
+                bbox_width = (float(detections[3])
+                              - float(detections[1])) / img_width
+                bbox_height = (float(detections[4])
+                               - float(detections[2])) / img_height
+
                 # Convert xyxy to normalized format
                 detections[1] = float(detections[1]) / img_width
                 detections[2] = float(detections[2]) / img_height
@@ -191,7 +187,7 @@ def main():
 
                 # Get class number from text file
                 class_num = class_list.index(detections[0])
-                
+
                 # Separate detections onto different lines
                 text_file.seek(0)
                 first_char = text_file.read(1)
@@ -207,12 +203,14 @@ def main():
                     text_file.write(line)
 
     # Create new yaml file that contains image directory and class info
-    new_yaml = "train: " + home_path + train_img_path[1:] + "\n" + "val: " + home_path + val_img_path[1:] + "\n\n" + "nc: " + str(len(class_list)) + "\n" + "names: " + str(class_list)  
+    new_yaml = "train: " + home_path + train_img_path[1:] + "\n" \
+               + "val: " + home_path + val_img_path[1:] + "\n\n" \
+               + "nc: " + str(len(class_list)) + "\n" + "names: " \
+               + str(class_list)
     content = yaml.safe_load(new_yaml)
 
     with open('data.yaml', 'w') as file:
         yaml.dump(content, file, sort_keys=False)
-
 
 
 if __name__ == "__main__":
