@@ -33,6 +33,7 @@ def main():
     (class_id centerx centery width height).
     """
     # pylint: disable=locally-disabled, too-many-locals
+    # pylint: disable=locally-disabled, too-many-branches, too-many-statements
     # Get command line arguments when running program
     parser = argparse.ArgumentParser()
     parser.add_argument("input_file", type=str,
@@ -209,7 +210,7 @@ def main():
                + str(class_list)
     content = yaml.safe_load(new_yaml)
 
-    with open('data.yaml', 'w') as file:
+    with open('data.yaml', 'w', encoding='utf-8') as file:
         yaml.dump(content, file, sort_keys=False)
 
 
