@@ -33,14 +33,6 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("input_file", type=str,
                         help="filepath for the JSON input file")
-    #parser.add_argument("output_folder", type=str,
-    #                    help="filepath for the txt output files")
-    #parser.add_argument("val_image_path", type=str,
-    #                    help="filepath for the validation images")
-    #parser.add_argument("val_label_path", type=str,
-    #                    help="path to the validation labels")
-    #parser.add_argument("val_output_folder", type=str,
-    #                    help="filepath for the val txt output files")
     parser.add_argument("conf", type=float,
                         help="confidence threshold for megadetector \
                         detections")
@@ -156,10 +148,6 @@ def main():
                               recursive=True))
     test_img_files = sorted(glob.glob(test_img_path + '/**/*.jpg',
                               recursive=True))
-                        
-    # Go to the label folder path and gather all text files
-    #all_files = os.listdir(args.val_label_path)
-    #txt_files = list(filter(lambda x: x[-4:] == '.txt', all_files))
 
     # For each text file convert annotations and write to a new text file
     for (val_txt, val_img) in zip(val_txt_files, val_img_files):
@@ -173,8 +161,6 @@ def main():
         new_file = val_txt[last_slash + 1:]
         with open(val_txt, 'r',
                   encoding='utf-8') as current_file:
-            #img_name = txt[:-4] + '.jpg'
-            #img = Image.open(args.val_image_path + img_name)
             img = Image.open(val_img)
 
             img_width, img_height = img.size
@@ -189,12 +175,6 @@ def main():
             for element in val_data:
                 detections = element.split()
 
-                # Convert xyxy to normalized format
-                #detections[1] = round(float(detections[1]) / img_width, 4)
-                #detections[2] = round(float(detections[2]) / img_height, 4)
-                #detections[3] = round(float(detections[3]) / img_width, 4)
-                #detections[4] = round(float(detections[4]) / img_height, 4)
-
                 # Convert normalized xyxy to centerx, centery, width, height
                 # Need to round to certain amount of digits
                 bbox_width = (float(detections[3]) - float(detections[1])) / img_width
@@ -205,9 +185,6 @@ def main():
                 detections[2] = float(detections[2]) / img_height
                 detections[3] = float(detections[3]) / img_width
                 detections[4] = float(detections[4]) / img_height
-                
-                #center_x = (float(detections[1]) / img_width) + (bbox_width / 2)
-                #center_y = (float(detections[2]) / img_height) + (bbox_height / 2)
 
                 center_x = detections[1] + (bbox_width / 2)
                 center_y = detections[2] + (bbox_height / 2)
@@ -252,8 +229,6 @@ def main():
         new_file = test_txt[last_slash + 1:]
         with open(test_txt, 'r',
                   encoding='utf-8') as current_file:
-            #img_name = txt[:-4] + '.jpg'
-            #img = Image.open(args.val_image_path + img_name)
             img = Image.open(test_img)
 
             img_width, img_height = img.size
@@ -268,12 +243,6 @@ def main():
             for element in test_data:
                 detections = element.split()
 
-                # Convert xyxy to normalized format
-                #detections[1] = round(float(detections[1]) / img_width, 4)
-                #detections[2] = round(float(detections[2]) / img_height, 4)
-                #detections[3] = round(float(detections[3]) / img_width, 4)
-                #detections[4] = round(float(detections[4]) / img_height, 4)
-
                 # Convert normalized xyxy to centerx, centery, width, height
                 # Need to round to certain amount of digits
                 bbox_width = (float(detections[3]) - float(detections[1])) / img_width
@@ -284,9 +253,6 @@ def main():
                 detections[2] = float(detections[2]) / img_height
                 detections[3] = float(detections[3]) / img_width
                 detections[4] = float(detections[4]) / img_height
-                
-                #center_x = (float(detections[1]) / img_width) + (bbox_width / 2)
-                #center_y = (float(detections[2]) / img_height) + (bbox_height / 2)
 
                 center_x = detections[1] + (bbox_width / 2)
                 center_y = detections[2] + (bbox_height / 2)
