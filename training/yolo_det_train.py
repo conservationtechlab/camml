@@ -13,7 +13,7 @@ BATCH_SIZE is set to 8, recommended size is whatever your GPU can handle.
 
 NAME is the name of the training folder where all weights and info will
 be saved. After your training there should be a
-"./runs/detect/yolov8n_custom/weights/" directory containing the
+"./runs/detect/{NAME}/weights/" directory containing the
 "best.pt" and "last.pt" trained models. I recommend renaming
 this "best.pt" model file to something more specific so you can
 test it later.
