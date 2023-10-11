@@ -1,7 +1,10 @@
 """Converts megadetector output JSON file to match Yolov8 pytortch txt format
 
 A .yaml file with image directory and class information is needed to
-train a Yolov8 model. The yaml file will need a format similar to
+train a Yolov8 model. This script will create a "./yolov8_training_data/"
+folder containing the symlinked images and produced annotation files. 
+This script will also create the yaml file pointing to the training and
+validation images. The yaml file will need a format similar to
 the one described in the "EXAMPLE" section here:
 https://roboflow.com/formats/yolov8-pytorch-txt
 
@@ -9,8 +12,7 @@ A confidence value from 0 to 1, such as 0.9, is needed to filter
 detections with a confidence below this value.
 
  Run as:
-     python megadetector_json_to_pt.py output.json \
-     /home/user/output_folder/ 0.9
+     python megadetector_json_to_pt.py output.json 0.9
 """
 
 import json
