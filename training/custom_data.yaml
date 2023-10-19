@@ -1,0 +1,6 @@
+train: /home/user/yolov8_training_data/train/images/
+val: /home/user/yolov8_training_data/validation/images/
+#test: /home/user/yolov8_training_data/test/images/	# Optional
+
+nc: 2
+names: [Dog, Cat]
