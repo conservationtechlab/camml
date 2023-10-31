@@ -15,14 +15,16 @@ import os
 
 from PIL import Image
 
+
 def main():
     """Converts OIDv4 annotation data and writes to txt files
 
     Converts the OIDv4 denormalized xyxy bbox data to centerx, centery,
     width, height and writes the data to txt files in the proper format.
     """
+    # pylint: disable=locally-disabled, too-many-locals
     # Get command line arguments when running program
-    parser =  argparse.ArgumentParser()
+    parser = argparse.ArgumentParser()
     parser.add_argument("label_folder_path", type=str,
                         help="path to folder containing txt input files")
     parser.add_argument("output_folder_path", type=str,
@@ -54,25 +56,18 @@ def main():
             for element in data:
                 detections = element.split()
 
-                # Convert xyxy to normalized format
-                #detections[1] = round(float(detections[1]) / img_width, 4)
-                #detections[2] = round(float(detections[2]) / img_height, 4)
-                #detections[3] = round(float(detections[3]) / img_width, 4)
-                #detections[4] = round(float(detections[4]) / img_height, 4)
-
                 # Convert normalized xyxy to centerx, centery, width, height
                 # Need to round to certain amount of digits
-                bbox_width = (float(detections[3]) - float(detections[1])) / img_width
-                bbox_height = (float(detections[4]) - float(detections[2])) / img_height
-                
+                bbox_width = (float(detections[3])
+                              - float(detections[1])) / img_width
+                bbox_height = (float(detections[4])
+                               - float(detections[2])) / img_height
+
                 # Convert xyxy to normalized format
                 detections[1] = float(detections[1]) / img_width
                 detections[2] = float(detections[2]) / img_height
                 detections[3] = float(detections[3]) / img_width
                 detections[4] = float(detections[4]) / img_height
-                
-                #center_x = (float(detections[1]) / img_width) + (bbox_width / 2)
-                #center_y = (float(detections[2]) / img_height) + (bbox_height / 2)
 
                 center_x = detections[1] + (bbox_width / 2)
                 center_y = detections[2] + (bbox_height / 2)
@@ -83,7 +78,7 @@ def main():
                 center_y = round(center_y, 8)
                 bbox_width = round(bbox_width, 8)
                 bbox_height = round(bbox_height, 8)
-                
+
                 # Separate detections onto different lines
                 text_file.seek(0)
                 first_char = text_file.read(1)
@@ -97,6 +92,7 @@ def main():
                            + str(center_y) + ' ' + str(bbox_width) \
                            + ' ' + str(bbox_height)
                     text_file.write(line)
+
 
 if __name__ == "__main__":
     main()
