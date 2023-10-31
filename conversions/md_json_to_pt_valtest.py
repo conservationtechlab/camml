@@ -2,7 +2,7 @@
 
 A .yaml file with image directory and class information is needed to
 train a Yolov8 model. This script will create a "./yolov8_training_data/"
-folder containing the symlinked images and produced annotation files. 
+folder containing the symlinked images and produced annotation files.
 This script will also create the yaml file pointing to the training and
 validation images. The yaml file will need a format similar to
 the one described in the "EXAMPLE" section here:
