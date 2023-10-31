@@ -20,10 +20,10 @@ import json
 import csv
 import os
 import argparse
-import random
 import glob
 
 from PIL import Image
+
 
 def main():
     """Converts JSON data and writes to CSV
@@ -39,12 +39,6 @@ def main():
                         help="filepath for the JSON input file")
     parser.add_argument("output_file", type=str,
                         help="filepath for the CSV output file")
-    #parser.add_argument("image_folder_path", type=str,
-    #                    help="path to the image folder")
-    #parser.add_argument("val_image_path", type=str,
-    #                    help="path to the validation image folder")
-    #parser.add_argument("val_label_path", type=str,
-    #                    help="path to the validation annotations")
     parser.add_argument("conf", type=float,
                         help="confidence threshold")
     parser.add_argument("--include",
@@ -89,10 +83,7 @@ def main():
                     img['detections'][i]['bbox'][2] = x_max
                     img['detections'][i]['bbox'][3] = y_max
 
-                    # Randomly set 90% of images to train,
-                    # and 10% to test.
-                    #rand_num = random.randint(1, 100)
-                    #set_type = ''
+                    # Set type to train
                     set_type = 'TRAIN'
                     category = img['file'].strip('/').split('/')[-2]
 
@@ -126,17 +117,17 @@ def main():
         folder = image_path.rfind('train')
         val_img_path = os.path.join(image_path[:folder] + 'validation/')
         test_img_path = os.path.join(image_path[:folder] + 'test/')
-        
+
         # Go to the label folder path and gather all text files recursively
         val_txt_files = sorted(glob.glob(val_img_path + '/**/*.txt',
-                              recursive=True))
+                                         recursive=True))
         val_img_files = sorted(glob.glob(val_img_path + '/**/*.jpg',
-                              recursive=True))
+                                         recursive=True))
 
         test_txt_files = sorted(glob.glob(test_img_path + '/**/*.txt',
-                              recursive=True))
+                                          recursive=True))
         test_img_files = sorted(glob.glob(test_img_path + '/**/*.jpg',
-                              recursive=True))
+                                          recursive=True))
 
         # For each text file change the annotations and write to csv
         for (val_txt, val_img) in zip(val_txt_files, val_img_files):
@@ -157,7 +148,6 @@ def main():
                 # For each detection change to normalized xyxy
                 for element in val_data:
                     detections = element.split()
-                    #print(detections)
 
                     detections[1] = round(float(detections[1]) / width, 4)
                     detections[2] = round(float(detections[2]) / height, 4)
@@ -170,7 +160,6 @@ def main():
                                          detections[2], None, None,
                                          detections[3], detections[4],
                                          None, None])
-
 
         # For each text file change the annotations and write to csv
         for (test_txt, test_img) in zip(test_txt_files, test_img_files):
@@ -191,7 +180,6 @@ def main():
                 # For each detection change to normalized xyxy
                 for element in test_data:
                     detections = element.split()
-                    #print(detections)
 
                     detections[1] = round(float(detections[1]) / width, 4)
                     detections[2] = round(float(detections[2]) / height, 4)
@@ -205,9 +193,6 @@ def main():
                                          detections[3], detections[4],
                                          None, None])
 
-
-
-        
 
 def coco_to_pascal_voc(x_tl, y_tl, width, height):
     """Convert Coco bounding box to Pascal Voc bounding box
