@@ -32,7 +32,7 @@ def main():
     data to a CSV in the proper format [set, class, file, xmin, ymin,
     '', '', xmax, ymax, '', ''].
     """
-    # pylint: disable=locally-disabled, too-many-locals
+    # pylint: disable=locally-disabled, too-many-locals, too-many-statements
     # Get command line arguments when running program
     parser = argparse.ArgumentParser()
     parser.add_argument("input_file", type=str,
