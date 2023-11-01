@@ -25,6 +25,7 @@ import glob
 
 from PIL import Image
 
+
 def main():
     """Converts JSON data and writes to CSV
 
@@ -39,12 +40,6 @@ def main():
                         help="filepath for the JSON input file")
     parser.add_argument("output_file", type=str,
                         help="filepath for the CSV output file")
-    #parser.add_argument("image_folder_path", type=str,
-    #                    help="path to the image folder")
-    #parser.add_argument("val_image_path", type=str,
-    #                    help="path to the validation image folder")
-    #parser.add_argument("val_label_path", type=str,
-    #                    help="path to the validation annotations")
     parser.add_argument("conf", type=float,
                         help="confidence threshold")
     parser.add_argument("--include",
@@ -66,8 +61,6 @@ def main():
 
         for img in image_data:
             # Set the file path
-            #image_path = os.path.join(args.image_folder_path,
-            #                          img['file'])
             image_path = img['file']
 
             if 'failure' in img.keys():
@@ -102,8 +95,6 @@ def main():
                         set_type = 'TEST'
 
                     # Get the class name from the image file name
-                    slash = img['file'].find('/')
-                    #category = img['file'][0:slash]
                     category = img['file'].strip('/').split('/')[-2]
 
                     # Megadetector uses 3 categories 1-animal, 2-person,
@@ -138,9 +129,9 @@ def main():
 
         # Go to the label folder path and gather all text files recursively
         txt_files = sorted(glob.glob(val_img_path + '/**/*.txt',
-                              recursive=True))
+                                     recursive=True))
         img_files = sorted(glob.glob(val_img_path + '/**/*.jpg',
-                              recursive=True))
+                                     recursive=True))
 
         # For each text file change the annotations and write to csv
         for (txt, img) in zip(txt_files, img_files):
@@ -161,7 +152,6 @@ def main():
                 # For each detection change to normalized xyxy
                 for element in val_data:
                     detections = element.split()
-                    #print(detections)
 
                     detections[1] = round(float(detections[1]) / width, 4)
                     detections[2] = round(float(detections[2]) / height, 4)
@@ -175,9 +165,6 @@ def main():
                                          detections[3], detections[4],
                                          None, None])
 
-
-
-        
 
 def coco_to_pascal_voc(x_tl, y_tl, width, height):
     """Convert Coco bounding box to Pascal Voc bounding box
