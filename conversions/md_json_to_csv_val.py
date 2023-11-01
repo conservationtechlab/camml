@@ -39,10 +39,10 @@ def main():
                         help="filepath for the JSON input file")
     parser.add_argument("output_file", type=str,
                         help="filepath for the CSV output file")
-    parser.add_argument("image_folder_path", type=str,
-                        help="path to the image folder")
-    parser.add_argument("val_image_path", type=str,
-                        help="path to the validation image folder")
+    #parser.add_argument("image_folder_path", type=str,
+    #                    help="path to the image folder")
+    #parser.add_argument("val_image_path", type=str,
+    #                    help="path to the validation image folder")
     #parser.add_argument("val_label_path", type=str,
     #                    help="path to the validation annotations")
     parser.add_argument("conf", type=float,
@@ -66,8 +66,9 @@ def main():
 
         for img in image_data:
             # Set the file path
-            image_path = os.path.join(args.image_folder_path,
-                                      img['file'])
+            #image_path = os.path.join(args.image_folder_path,
+            #                          img['file'])
+            image_path = img['file']
 
             if 'failure' in img.keys():
                 print(img['file'] + ' failed to access.\n')
@@ -102,7 +103,8 @@ def main():
 
                     # Get the class name from the image file name
                     slash = img['file'].find('/')
-                    category = img['file'][0:slash]
+                    #category = img['file'][0:slash]
+                    category = img['file'].strip('/').split('/')[-2]
 
                     # Megadetector uses 3 categories 1-animal, 2-person,
                     # 3-vehicle, only the animal detections are needed
@@ -131,11 +133,13 @@ def main():
         # Iterate through OID labels
         # Convert OID annotations to autoML format
         # Write validation annotations to csv
-        
+        folder = image_path.rfind('train')
+        val_img_path = os.path.join(image_path[:folder] + 'validation/')
+
         # Go to the label folder path and gather all text files recursively
-        txt_files = sorted(glob.glob(args.val_image_path + '/**/*.txt',
+        txt_files = sorted(glob.glob(val_img_path + '/**/*.txt',
                               recursive=True))
-        img_files = sorted(glob.glob(args.val_image_path + '/**/*.jpg',
+        img_files = sorted(glob.glob(val_img_path + '/**/*.jpg',
                               recursive=True))
 
         # For each text file change the annotations and write to csv
