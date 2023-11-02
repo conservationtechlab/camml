@@ -93,10 +93,14 @@ python detection/run_detector_batch.py /home/user/megadetector/md_v5a.0.0.pt /ho
 This will produce your `test_output.json` output file and you can now proceed with using these detections to train a TFLite model. Make sure to deactivate your environment before moving on to the next steps:  
 `conda deactivate`
 
-## Install packages
+## Install packages needed for TFLite Training
 
 `sudo apt -y install libportaudio2`  
-We'll want to create a new virtual environment to download the packages needed for training.(may work on one environment)
+
+Re-activate the virtual env you had created before (not the conda one):
+`workon camml_training`
+
+Install required packages:
 `pip install --use-deprecated=legacy-resolver tflite-model-maker`  
 `pip install pycocotools`  
 `pip install opencv-python-headless==4.1.2.30`  
@@ -116,10 +120,11 @@ python megadetector_json_to_csv.py ~/megadetector/test_output.json ~/tflite_trai
 3. Use the `obj_det_train.py` script to train the model and export to TFLite. You should now see a `model.tflite` file in your current directory. To run the script enter:
 ```
 python obj_det_train.py ~/tflite/test_output.csv
-```  
-You can now deactivate your virtual environment you used for training with:
-`deactivate vir_env`  
-where "vir_env" is replaced by your virtual environment's name.  
+```
+  
+You can now deactivate the virtual environment you used for training:
+
+    deactivate
   
 ## Compile the TFLite model for the Edge TPU
 You may need a new virtual environment to compile this model for the Coral.  
