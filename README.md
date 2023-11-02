@@ -95,16 +95,22 @@ This will produce your `test_output.json` output file and you can now proceed wi
 
 ## Install packages needed for TFLite Training
 
-`sudo apt -y install libportaudio2`  
+Install this Debian package (note: what is this a dependency of?)
 
-Re-activate the virtual env you had created before (not the conda one):
-`workon camml_training`
+    sudo apt -y install libportaudio2
 
-Install required packages:
-`pip install --use-deprecated=legacy-resolver tflite-model-maker`  
-`pip install pycocotools`  
-`pip install opencv-python-headless==4.1.2.30`  
-`pip uninstall -y tensorflow && pip install tensorflow==2.8.0`  
+Re-activate the virtual environment you had created before (not the
+conda one):
+
+    workon camml_training
+
+Install required pip packages:
+
+    pip install --use-deprecated=legacy-resolver tflite-model-maker
+    pip install pycocotools
+    pip install opencv-python-headless==4.1.2.30
+    pip uninstall -y tensorflow && pip install tensorflow==2.8.0
+
 #`pip install humanfriendly` (delete?)
 
 ## Steps for training model
