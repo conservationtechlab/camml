@@ -72,7 +72,7 @@ cd ~/git
 git clone https://github.com/ecologize/yolov5/
 git clone https://github.com/ecologize/CameraTraps
 git clone https://github.com/Microsoft/ai4eutils
-cd ~/git/cameratraps
+cd ~/git/CameraTraps/envs/
 conda env create --file environment-detector.yml
 conda activate cameratraps-detector
 export PYTHONPATH="$PYTHONPATH:$HOME/git/CameraTraps:$HOME/git/ai4eutils:$HOME/git/yolov5"
