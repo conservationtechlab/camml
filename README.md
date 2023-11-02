@@ -83,10 +83,11 @@ Add this line to the end of your .bashrc file:
 `export PYTHONPATH="$PYTHONPATH:$HOME/git/CameraTraps:$HOME/git/ai4eutils:$HOME/git/yolov5"`  
 Then save, exit and run:  
 `source ~/.bashrc`  
-This will reload your terminal and you should now be able to activate the enviroment with:  
+This will reload your terminal and you should now be able to activate the environment with:  
 `conda activate cameratraps-detector`  
 You are now able to run MegaDetector on a given set of images with the following code:  
 ```
+cd ..
 python detection/run_detector_batch.py /home/user/megadetector/md_v5a.0.0.pt /home/user/image_folder/ /home/user/megadetector/test_output.json --recursive --checkpoint_frequency 10000
 ```  
 This will produce your `test_output.json` output file and you can now proceed with using these detections to train a TFLite model. Make sure to deactivate your environment before moving on to the next steps:  
