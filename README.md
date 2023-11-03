@@ -10,7 +10,7 @@ https://coral.ai/docs/accelerator/get-started/#pycoral-on-linux
 
 # Training models for use with camml
 
-Included in this repository (but currently exposed through the
+Included in this repository (but not currently exposed through the
 package) are tools for training models for use with camml.  Camml has
 support for YOLOv3 and MobilenetSSD but the training pipelines for
 those were not included in this repository.  What is included here are
