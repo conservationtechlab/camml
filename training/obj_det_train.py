@@ -31,11 +31,11 @@ model = object_detector.create(train_data, model_spec=spec,
                                batch_size=8, train_whole_model=True,
                                validation_data=validation_data)
 
-# Evaluate model with test data
-print(model.evaluate(test_data))
-
-# Export as tflite model
+print('\n*** Exporting TFLite model ***\n')
 model.export(export_dir='.')
 
-# Evaluate tflite model
+print('\n*** Running evaluation of model with test data ***\n')
+print(model.evaluate(test_data))
+
+print('\n*** Running evaluation of TFLITE model with test data ***\n')
 print(model.evaluate_tflite('model.tflite', test_data))
