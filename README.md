@@ -173,12 +173,12 @@ To deactivate the conda environment:
 The steps for setting up and using Megadetector are described [here](https://github.com/microsoft/CameraTraps/blob/main/megadetector.md). As the instructions can be subject to change we will also guide you through the instructions ourselves, as they were presented to us at the time. All instructions will assume you're using a Linux operating system.  
 
 To setup and use MegaDetector you'll need
-[Anaconda](https://www.anaconda.com/products/individual) and Git
-installed. Anaconda (installation instructions above) is used to
-create self contained environment where you can install specific
-packages and dependencies without the worry of creating conflicts and
-breaking other setups. You may also need to have recent NVIDIA drivers
-if you plan to use a GPU to speed up detection.
+[Anaconda](https://www.anaconda.com/products/individual). Anaconda
+(installation instructions above) is used to create self contained
+environment where you can install specific packages and dependencies
+without the worry of creating conflicts and breaking other setups. You
+may also need to have recent NVIDIA drivers if you plan to use a GPU
+to speed up detection.
 
 Download a MegaDetector model file. For example, [MDv5a]:
 
@@ -279,34 +279,36 @@ Install required pip packages:
     pip install pycocotools
     pip install opencv-python-headless==4.1.2.30
     pip uninstall -y tensorflow && pip install tensorflow==2.8.0
+    pip install numpy==1.23.5
 
-These may also be necessary (need to check):
+This may also be necessary (need to check):
 
     pip install protobuf==3.20.3
-    pip install absl-py==1.2
 
 ### Steps for training model
 
 1. Run megadetector on a desired set of images with `git/CameraTraps/run_detector_batch.py`. If you've completed the "Setting up MegaDetector steps you should be ready to go. This will produce an output `.json` file which contains the bounded box image data. The detections are made in 3 classes 1-animal, 2-person, and 3-vehicle.  
 Important Note: You can run MegaDetector on either all your images at once or only on your training images. If you choose all your images at once they will be randomly sorted between train, validation, and test with a roughly 80/10/10 split and all detections will be filtered by the same confidence value you provide. You should then use the `megadetector_json_to_csv.py` script for the next step. If you choose to run MegaDetector only on your training images you should use the `md_json_to_csv_valtest.py` script which will convert your MegaDetector output `.json` file as normal but then convert the validation and test OIDv4 annotations into the same format. This second method produces more trustworthy mean Average Precision metrics.  
+
 2. Use the `megadetector_json_to_csv.py` (or `md_json_to_csv_valtest.py`) script on your megadetector output `.json` file to produce a `.csv` file in the appropriate format for training the object detector. The 'person' and 'vehicle' detections will be excluded and the 'animal' class will be changed to the folder name where the images came from. For example: Any 'animal' detections on images from the directory /home/usr/images/Cat/ will change to 'Cat' detections in the CSV file. Since megadetector's detections each come with their own confidence score you can set the confidence argument to a value between 0 and 1, such as 0.9, to only include detections which have a confidence greater than or equal to this value. To run the script enter:    
 
     cd ~/git/camml/training/
     mkdir ~/tflite_train
     python megadetector_json_to_csv.py ~/megadetector/test_output.json ~/tflite_train/test_output.csv 0.9
   
-3. Use the `obj_det_train.py` script to train the model and export to TFLite. 
-    
-Make sure tensorflow can write its cache by storing it in user's own
-space:
-
-    export TFHUB_CACHE_DIR=./tmp
-
-Now run the script:
+3. Use the `obj_det_train.py` script to train the model and export to TFLite:
 
     python obj_det_train.py ~/tflite_train/test_output.csv
 
-You should now see a `model.tflite` file in your current directory.
+NOTE: Known issue in some installs when running previous line has been that
+TensorFlow needs permissions on /tmp and doesn't have them.  The fix
+has been to make sure Tensorflow can write its cache by storing it in
+user's own space:
+
+    export TFHUB_CACHE_DIR=./tmp
+
+If `obj_det_train.py` did run successfully, you should now see a
+`model.tflite` file in your current directory.
   
 You can now deactivate the virtual environment you used for training:
 
@@ -314,28 +316,30 @@ You can now deactivate the virtual environment you used for training:
   
 ### Compile the TFLite model for the Edge TPU
 
-NOTE: ARE ALL THE PACKAGES INSTALLED BELOW ACTUALLY REQUIRED FOR THE
-COMPILATION OR ARE SOME HERE FOR THE TESTING IN THE NEXT SECTION?  IF
-LATTER, THEN WE SHOULD MOVE THEM TO THE NEXT SECTION.
+Install necessary packages:
 
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-
     echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list
-
     sudo apt update
     sudo apt install edgetpu-compiler
-  
     sudo apt install libedgetpu1-std
-    sudo apt install python3-pycoral
-    cd ~/git
-    git clone https://github.com/google-coral/pycoral.git
+
+NOTE: Is last package necessary for this step? Or maybe it belongs
+in next section as it is only required there?
 
 Compile model to run on one Edge TPU:
 
     cd ~/git/camml/training
     edgetpu_compiler model.tflite --num_segments=1
 
+This will create a file called model_edgetpu.tflite sitting in active
+directory.
+
 ### Test the model on Coral Edge TPU
+
+INCLUDE INSTRUCTIONS FOR SETTING UP FOR RUNNING ON CORAL USB ACCELERATOR.
+
+    sudo apt install python3-pycoral
 
 A labels.txt file will need to be made containing class names such as:
 ```
@@ -351,6 +355,7 @@ python3 /pycoral/examples/detect_image.py --model model_edgetpu.tflite --labels 
 If this step fails, you may also need to install the TFLite runtime associated with your Linux OS and Python versions.  
 
 ## Training custom YOLOv8 models
+
 Yolov8 models use individual PyTorch `.txt` annotation files which are each associated with an image. These annotation files should be in a folder at the same level as the images folder such as "/home/user/project/images/" and "/home/user/project/labels/". You will need a `.yaml` file that contains the path to the train, validation, and test directories as well as the number of classes in your dataset and the class names. The conversion script `megadetector_json_to_pt.py` will use the megadetector output file and the path to your validation images to create a folder structure with symlinked images and `.txt` files in the required format. It will also create the necessary  data.yaml file for training. For example:  
 ```
 train: /home/user/yolov8_training_data/train/images  
