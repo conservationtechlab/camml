@@ -280,7 +280,10 @@ Install required pip packages:
     pip install opencv-python-headless==4.1.2.30
     pip uninstall -y tensorflow && pip install tensorflow==2.8.0
 
-#`pip install humanfriendly` (delete?)
+These may also be necessary (need to check):
+
+    pip install protobuf==3.20.3
+    pip install absl-py==1.2
 
 ### Steps for training model
 
@@ -292,29 +295,45 @@ Important Note: You can run MegaDetector on either all your images at once or on
     mkdir ~/tflite_train
     python megadetector_json_to_csv.py ~/megadetector/test_output.json ~/tflite_train/test_output.csv 0.9
   
-3. Use the `obj_det_train.py` script to train the model and export to TFLite. You should now see a `model.tflite` file in your current directory. To run the script enter:
+3. Use the `obj_det_train.py` script to train the model and export to TFLite. 
+    
+Make sure tensorflow can write its cache by storing it in user's own
+space:
 
-    python obj_det_train.py ~/tflite/test_output.csv
+    export TFHUB_CACHE_DIR=./tmp
+
+Now run the script:
+
+    python obj_det_train.py ~/tflite_train/test_output.csv
+
+You should now see a `model.tflite` file in your current directory.
   
 You can now deactivate the virtual environment you used for training:
 
     deactivate
   
 ### Compile the TFLite model for the Edge TPU
-You may need a new virtual environment to compile this model for the Coral.  
-`curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -`  
-```
-echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list
-```  
-`sudo apt-get update`  
-`sudo apt-get install edgetpu-compiler`  
-  
-`sudo apt-get install libedgetpu1-std`  
-`sudo apt-get install python3-pycoral`  
-`git clone https://github.com/google-coral/pycoral.git`  
 
-Compile model to run on  1 Edge TPU:
-`edgetpu_compiler model.tflite --num_segments=1`
+NOTE: ARE ALL THE PACKAGES INSTALLED BELOW ACTUALLY REQUIRED FOR THE
+COMPILATION OR ARE SOME HERE FOR THE TESTING IN THE NEXT SECTION?  IF
+LATTER, THEN WE SHOULD MOVE THEM TO THE NEXT SECTION.
+
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+
+    echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list
+
+    sudo apt update
+    sudo apt install edgetpu-compiler
+  
+    sudo apt install libedgetpu1-std
+    sudo apt install python3-pycoral
+    cd ~/git
+    git clone https://github.com/google-coral/pycoral.git
+
+Compile model to run on one Edge TPU:
+
+    cd ~/git/camml/training
+    edgetpu_compiler model.tflite --num_segments=1
 
 ### Test the model on Coral Edge TPU
 
