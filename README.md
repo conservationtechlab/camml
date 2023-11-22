@@ -150,7 +150,7 @@ steps are:
 Open a web browser and download the Anaconda installer for Linux [here](https://www.anaconda.com/download/#linux).
 
 To be safe, at this stage, make sure to deactivate any virtualenv
-enviroments you have activated:
+environments you have activated:
 
     deactivate
 
@@ -184,7 +184,7 @@ through the instructions ourselves, as they were presented to us at
 the time. All instructions will assume you're using a Linux operating
 system.
 
-To setup and use MegaDetector you'll need
+To set up and use MegaDetector you'll need
 [Anaconda](https://www.anaconda.com/products/individual). Anaconda
 (installation instructions above) is used to create self contained
 environment where you can install specific packages and dependencies
@@ -192,14 +192,14 @@ without the worry of creating conflicts and breaking other setups. You
 may also need to have recent NVIDIA drivers if you plan to use a GPU
 to speed up detection.
 
-Download a MegaDetector model file. For example, [MDv5a]:
+Download a MegaDetector model file. For example, [MDv5a](https://github.com/ecologize/CameraTraps/releases/download/v5.0/md_v5a.0.0.pt):
 
     mkdir ~/megadetector
     cd ~/megadetector
     wget https://github.com/ecologize/CameraTraps/releases/download/v5.0/md_v5a.0.0.pt
 
 These commands will put the model file in a "megadetector" folder in
-your home directory, such as "/home/<user>/megadetector/", which
+your home directory, such as `/home/<user>/megadetector/`, which
 matches the rest of their and our instructions.
 
 With Anaconda installed per instructions above, you should see
