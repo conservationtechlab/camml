@@ -74,8 +74,8 @@ Create the folder you've designated for the virtual environments:
 
     mkdir -p $WORKON_HOME  
 
-You should now be able to create new virtual environments, in this
-README will use one called `camml_training`:
+You should now be able to create new virtual environments.  In this
+README we'll use one called `camml_training`:
 
     mkvirtualenv camml_training
 
@@ -84,7 +84,7 @@ to deactivate it:
 
     deactivate
 
-And to re-activate it when you need it:
+And to re-activate it when you need it again:
 
     workon camml_training
 
@@ -96,15 +96,22 @@ Anaconda environments for Megadetector later in the README.
 
 When getting started with training custom object detector models for
 camml, it can be useful to download existing, publicly available
-labeled data.  OpenImages is a good source of such data and Open
-Images Downloaderv4 can be used to download sets of images by class,
-amount, and set type from OpenImages v4. This is a good tool to get
-your training and validation images as well as ground truth bounding
-box annotations. In particular, the conversion scripts will take the
-true validation annotations rather than try to guess them with
-MegaDetector. This makes our final evaluation metrics more
-trustworthy. You may need a new virtual environment for this step. To
-begin, enter into your command line:
+labeled data.  OpenImages is a good source of such data and the
+downloader tool installed in this section provides an easy way to
+download sets of images by class, amount, and split type from
+OpenImages v4; to get training and validation images for use during
+training in addition to test images with ground truth bounding box
+annotations for use in evaluating whether training with automated
+boxing by MegaDetector produced acceptable performance. NOTE: THIS
+NEXT BIT PERHAPS BELONGS IN A DIFFERENT (NEW?) SECTION THAT ELUCIDATES
+WHAT IS HAPPENING IN THE DATA PREPARATION SCRIPTS? In particular, the
+conversion scripts will take the true test annotations rather than try
+to guess them with MegaDetector (NOTE: NEED TO DOUBLE-CHECK BUT IT
+LOOKED AS IF THE VALIDATION DATA WAS ALSO USING MANUAL BOXES? NO REAL
+HARM HERE BUT WORTH CHECKING.). This makes our final evaluation
+metrics more trustworthy.
+
+Clone OpenImagesv4 downloader tool and install its dependencies:	
 
     cd ~/git           
     git clone https://github.com/EscVM/OIDv4_ToolKit.git
@@ -112,8 +119,8 @@ begin, enter into your command line:
     workon camml_training
     pip install -r requirements.txt
 
-To download 50 images each of cats and dogs from the training and
-validation sets on OpenImages:
+Run tool. To download 50 images each of cats and dogs from the
+training and validation sets on OpenImages:
 
     python main.py downloader --classes Cat Dog --type_csv train --limit 50
     python main.py downloader --classes Cat Dog --type_csv validation --limit 50
@@ -170,7 +177,12 @@ To deactivate the conda environment:
 
 ## Setting up MegaDetector
 
-The steps for setting up and using Megadetector are described [here](https://github.com/microsoft/CameraTraps/blob/main/megadetector.md). As the instructions can be subject to change we will also guide you through the instructions ourselves, as they were presented to us at the time. All instructions will assume you're using a Linux operating system.  
+The steps for setting up and using Megadetector are described
+[here](https://github.com/microsoft/CameraTraps/blob/main/megadetector.md). As
+the instructions can be subject to change we will also guide you
+through the instructions ourselves, as they were presented to us at
+the time. All instructions will assume you're using a Linux operating
+system.
 
 To setup and use MegaDetector you'll need
 [Anaconda](https://www.anaconda.com/products/individual). Anaconda
@@ -226,26 +238,29 @@ Save the file, exit and run:
     
 to reload your settings.
 
-to deactivate the conda environment:
+To deactivate the conda environment:
 
     conda deactivate
 
-to re-activate when you need it:
+To re-activate when you need it:
 
     conda activate cameratraps-detector`
+
+as you will in the next section.
 
 ## Using MegaDetector to automatically generate boxed data
 
 With MegaDetector installed, you are now able to run MegaDetector on a
 given set of images:
 
+    conda activate cameratraps-detector
     cd ~/git/CameraTraps
     python detection/run_detector_batch.py ~/megadetector/md_v5a.0.0.pt ~/git/OIDv4_ToolKit/OID/Dataset/train/ ~/megadetector/test_output.json --recursive --checkpoint_frequency 10000
 
 Here, we have used the training images that were downloaded from OIDv4
 in the earlier part of this README as an example.
 
-This will produce your `test_output.json` output file and you can now
+This will produce a `test_output.json` output file and you can now
 proceed with using these detections to train a TFLite model. Make sure
 to deactivate your environment before moving on to the next steps:
 
