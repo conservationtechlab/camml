@@ -169,11 +169,11 @@ class ObjectDetectorHandler():
 
 def read_classes_from_file(label_file):
     labels = []
-    for row in open(label_file):
+    for row in open(label_file, encoding='utf-8'):
         labels.append(row.strip())
 
     return labels
-    
+
 
 # def read_classes_from_file(label_file):
 #     """Read in class labels from a file.
@@ -208,6 +208,12 @@ def read_classes_from_file(label_file):
 
 
 class TargetDetector(ObjectDetectorHandler):
+    """Looks for one specific target class
+
+    Further specifies an object detector into a detector of a
+    particular class in the OD's class list.
+
+    """
     def __init__(self,
                  model_config,
                  model_weights,
@@ -217,6 +223,9 @@ class TargetDetector(ObjectDetectorHandler):
                  nms_threshold,
                  class_names,
                  target_class):
+        """Constructor for TargetDetector
+
+        """
 
         super().__init__(model_config,
                          model_weights,
@@ -229,6 +238,9 @@ class TargetDetector(ObjectDetectorHandler):
         self.class_names = class_names
 
     def detect(self, frame):
+        """Perform detection on a frame
+
+        """
         results, inference_time = self.infer(frame)
         msg = ("[INFO] Inference time: "
                + "{:.1f} milliseconds".format(inference_time))
