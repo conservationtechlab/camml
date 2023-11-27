@@ -319,11 +319,13 @@ data, you would likely have to do some work to prepare it to match the
 format of that data. Instructions for doing this will ideally be added
 to this README later.
 
-1. Run megadetector on a desired set of images with
+#### 1. Run MegaDetector on the data
+
+Run megadetector on a desired set of images with
 `git/CameraTraps/run_detector_batch.py` (see instructions in earlier
 section of this README. If you've completed that section, you should
 be ready to go and can skip this step). This will produce an output
-`.json` file which contains the bounded box image data. 
+`.json` file which contains the bounded box image data.
 
 Important Note: You can run MegaDetector on either all your images at
 once or only on your training images. If you choose all your images at
@@ -338,26 +340,32 @@ validation and test OIDv4 annotations into the same format. This
 second method produces more trustworthy mean Average Precision
 metrics.
 
-2. Use the `megadetector_json_to_csv.py` (or
-`md_json_to_csv_valtest.py`) script on your megadetector output
-`.json` file to produce a `.csv` file in the appropriate format for
-training the object detector. MegaDetector detections are one of 3
-classes, with a number representing each class: 1 for animal, 2 for
-person, and 3 for ehicle.  The 'person' and 'vehicle' detections will
-be excluded by this script and the 'animal' class will be changed to
-the folder name where the images came from. For example: Any 'animal'
-detections on images from the directory /home/usr/images/Cat/ will
-change to 'Cat' detections in the CSV file. Since megadetector's
-detections each come with their own confidence score you can set the
-confidence argument to a value between 0 and 1, such as 0.9, to only
-include detections which have a confidence greater than or equal to
-this value. To run the script enter:
+#### 2. Prep CSV for training from MegaDetector JSON
+
+Use the `megadetector_json_to_csv.py` (or `md_json_to_csv_valtest.py`)
+script on your megadetector output `.json` file to produce a `.csv`
+file in the appropriate format for training the object
+detector. MegaDetector detections are one of 3 classes, with a number
+representing each class: 1 for animal, 2 for person, and 3 for ehicle.
+The 'person' and 'vehicle' detections will be excluded by this script
+and the 'animal' class will be changed to the folder name where the
+images came from. For example: Any 'animal' detections on images from
+the directory /home/usr/images/Cat/ will change to 'Cat' detections in
+the CSV file. Since megadetector's detections each come with their own
+confidence score you can set the confidence argument to a value
+between 0 and 1, such as 0.9, to only include detections which have a
+confidence greater than or equal to this value.
+
+To run the script enter:
 
     cd ~/git/camml/training/
     mkdir ~/tflite_train
     python megadetector_json_to_csv.py ~/megadetector/test_output.json ~/tflite_train/test_output.csv 0.9
-  
-3. Use the `obj_det_train.py` script to train the model and export a
+
+
+#### 3. Perform training using CSV as input
+
+Use the `obj_det_train.py` script to train the model and export a
 TFLite model:
 
     python obj_det_train.py ~/tflite_train/test_output.csv
