@@ -429,13 +429,12 @@ these packages:
     sudo apt install pycoral-examples
 
 At this point, you should physically connect the USB Coral Accelerator
-to the computer.
+to the computer using a USB cable.  Note: inference speed is affected
+by connection speed so use a USB 3.0 or higher port if possible.
 
-A label map file will need to be created containing class names such
-as: ``` 0 Cat 1 Dog ```
-
-You can extract this label map from the non-edgetpu tflite model by
-unzipping it:
+To map class indices to class labels, you'll need a label map
+file. You can extract this label map from the non-edgetpu tflite model
+by unzipping that file:
 
     unzip demo.tflite
 
@@ -457,7 +456,7 @@ NOTE: if using current `pillow` package (as of 2023-11-27) the script
 will fail due to a change in `pillow` that is not reflected in the
 `detect_image.py`. Here's a hacky fix:
 
-   sudo sed -i 's/ANTIALIAS/LANCZOS/g' /usr/share/pycoral/examples/detect_image.py
+    sudo sed -i 's/ANTIALIAS/LANCZOS/g' /usr/share/pycoral/examples/detect_image.py
 
 If this `detect_image.py` script still fails, you may also need to
 install the TFLite runtime associated with your Linux OS and Python
