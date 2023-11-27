@@ -1,10 +1,23 @@
 # camml
-A package of ML components for CTL field camera systems. 
+A package of ML components for CTL field camera systems.
 
-## Dependencies
+The package is a high-level library for doing image classification and
+object detection on edge camera devices particularly targeted towards
+dependent systems developed and used by the Conservation Technology
+Lab and its partners.
 
-Depends on Google's pycoral package. Instructions for installing this
-at:
+At this stage, there are two facets of this repository: 1) the actual
+camml package whose releases are served at PyPI and 2) a training
+pipeline to create custom object detector models for use with the
+camml package that is only accessible through the repo itself. At this
+moment, almost all the remainder of this README (beyond the next
+subsection) is concerned with the training facet.
+
+## Dependencies of the package
+
+The camml package installs most of its dependencies automatically
+except that it also depends on Google's pycoral package which is not
+served by PyPI. Instructions for installing this are at:
 
 https://coral.ai/docs/accelerator/get-started/#pycoral-on-linux
 
@@ -12,107 +25,265 @@ https://coral.ai/docs/accelerator/get-started/#pycoral-on-linux
 
 Included in this repository (but not currently exposed through the
 package) are tools for training models for use with camml.  Camml has
-support for YOLOv3 and MobilenetSSD but the training pipelines for
-those were not included in this repository.  What is included here are
-training tools for YOLOV8 and EfficientDet.  For either, one can train
-from manually boxed data or from data that has merely been labeled for
-image classification.  In the latter case, MegaDetector is used to
-generate the training boxes (with the presumption that all the classes
-of interest are animals), applying the image-level labels as the
-labels to the boxes.  That latter automated boxing process comes, of
-course, with assumptions and risks that should be taken into account.
+support for YOLOv3 and MobilenetSSD models but the training pipelines
+for those were not included in this repository.  What is included here
+are training tools for YOLOv8 and EfficientDet.  For either, one can
+train from manually boxed data or from data that has merely been
+labeled for image classification.  In the latter case, MegaDetector is
+used to generate the training boxes (with the presumption that all the
+classes of interest are animals), applying the image-level labels as
+the labels to the boxes.  That latter automated boxing process comes,
+of course, with assumptions and risks that should be taken into
+account.
+
+The first step is to clone this repository:
+
+    mkdir ~/git
+    cd ~/git
+    git clone https://github.com/conservationtechlab/camml.git
+
+## Setting up virtualenv environments
+
+As always, it is advisable to keep your python environments for
+specific tasks (like this training process) separate from your main
+system's python environment.  Unfortunately, as things stand,
+different parts of this training process require different
+configurations of python packages so you'll need multiple environments
+that you have to activate and deactivate at different stages of the
+process.  We'll use `virtualenv` for at least one of these virtual
+environments. Here's how to get that set up:
+
+Install virtualenvwrapper:  
+
+    sudo pip install virtualenvwrapper
+
+Edit your ~/.bashrc file with a text editor such as emacs:  
+
+    emacs ~/.bashrc
+  
+At the end of that file add the following lines:  
+
+    export WORKON_HOME=~/envs  
+    export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3  
+    source /usr/local/bin/virtualenvwrapper.sh  
+
+Run the script with:  
+
+    source ~/.bashrc
+
+Create the folder you've designated for the virtual environments:
+
+    mkdir -p $WORKON_HOME  
+
+You should now be able to create new virtual environments.  In this
+README, we'll use one called `camml_tflite_training` for the
+EfficientDet TFLITE training pipeline and one called
+`camml_yolov8_training` for the YOLOv8 training pipeline and we will
+create them thusly:
+
+    mkvirtualenv camml_tflite_training
+    mkvirtualenv camml_yolov8_training
+
+Each environment will be activated after you created it. When you want
+to deactivate a given virtualenv environment:
+
+    deactivate
+
+And to re-activate it when you need it again:
+
+    workon camml_tflite_training
+
+Make sure your environment is deactivated before you set up or activate your
+Anaconda environments for Megadetector later in the README.
+
+
+## Downloading example image data
+
+When getting started with training custom object detector models for
+camml, it can be useful to download existing, publicly available
+labeled data.  OpenImages is a good source of such data and the
+downloader tool installed in this section provides an easy way to
+download sets of images by class, amount, and split type from
+OpenImages v4; to get training and validation images for use during
+training in addition to test images with ground truth bounding box
+annotations for use in evaluating whether training with automated
+boxing by MegaDetector produced acceptable performance. 
+
+Clone OpenImagesv4 downloader tool and install its dependencies:	
+
+    cd ~/git           
+    git clone https://github.com/EscVM/OIDv4_ToolKit.git
+    cd OIDv4_ToolKit
+    workon camml_tflite_training
+    pip install -r requirements.txt
+
+Run tool. To download 50 images each of cats and dogs from the
+training and validation sets on OpenImages:
+
+    python main.py downloader --classes Cat Dog --type_csv train --limit 50
+    python main.py downloader --classes Cat Dog --type_csv validation --limit 50
+
+When prompted enter "Y" to download the missing annotation file. You
+should now have 50 Cat and 50 Dog training images as well as 50 Cat
+and 50 Dog validation images in
+"~/git/OIDv4_ToolKit/OID/Dataset/". Within the Cat and Dog folders
+will also be a "Label" folder with `.txt` annotation files for each
+image.
+
+## Setting up an Anaconda environment for Megadetector
+
+Both the TFLite and YOLOv8 training pipelines described below leverage
+an off-the-shelf general-animal object detector called Megadetector
+that is commonly used in the camera trap community.  In this project,
+we use Megadetector to automatically create boxed data from data only
+labelled at the image level to produce data that can be used to train
+custom object detectors (user beware: this strategy has assumptions
+and possible pitfalls).
+
+We will need an Anaconda environment for using Megadetector. To setup
+Anaconda we will use the same steps described
+[here](https://docs.anaconda.com/free/anaconda/install/linux/). These
+steps are:
+
+Open a web browser and download the Anaconda installer for Linux
+[here](https://www.anaconda.com/download/#linux).
+
+To be safe, at this stage, make sure to deactivate any virtualenv
+environments you have activated:
+
+    deactivate
+
+In a terminal, navigate to where you downloaded the Anaconda installer
+script and run (replacing the name of the Anaconda install script to
+match the one you just downloaded):
+
+    bash Anaconda3-2023.03-1-Linux-x86_64.sh
+
+Press enter to review the license agreement and press and hold enter
+to scroll (or hit 'q' to jump forward if you are feeling
+trusting). Enter "yes" to agree to the license agreement. Hit enter to
+accept the default install location or enter a filepath to specify a
+different install location. The installation will begin and may take a
+few minutes. When finished you will be prompted to enter "yes" to
+modify your shell profile to automatically initialize conda. You can
+now either close and reopen your terminal or use `source ~/.bashrc` to
+refresh the terminal. You should see "(base)" at your command line and
+you should be ready for the MegaDetector setup steps.
+
+To deactivate the conda environment:
+
+    conda deactivate base`
+
+## Setting up MegaDetector
+
+The steps for setting up and using Megadetector are described
+[here](https://github.com/microsoft/CameraTraps/blob/main/megadetector.md). As
+the instructions can be subject to change we will also guide you
+through the instructions ourselves, as they were presented to us at
+the time. All instructions will assume you're using a Linux operating
+system.
+
+To set up and use MegaDetector you'll need
+[Anaconda](https://www.anaconda.com/products/individual). Anaconda
+(installation instructions above) is used to create self contained
+environment where you can install specific packages and dependencies
+without the worry of creating conflicts and breaking other setups. You
+may also need to have recent NVIDIA drivers if you plan to use a GPU
+to speed up detection.
+
+Download a MegaDetector model file. For example, the following command
+will download MegaDetector v5a:
+
+    mkdir ~/megadetector
+    cd ~/megadetector
+    wget https://github.com/ecologize/CameraTraps/releases/download/v5.0/md_v5a.0.0.pt
+
+These commands will put the model file in a "megadetector" folder in
+your home directory, such as `/home/<user>/megadetector/`, which
+matches the rest of their and our instructions.
+
+With Anaconda installed per instructions above, you should see
+`(base)` at your command prompt. Run the following instructions to
+clone the required github repositories and create the anaconda
+environment in which you will run MegaDetector:
+
+    cd ~/git
+    git clone https://github.com/ecologize/yolov5/
+    git clone https://github.com/ecologize/CameraTraps
+    git clone https://github.com/Microsoft/ai4eutils
+    cd ~/git/CameraTraps/envs/
+    conda env create --file environment-detector.yml
+    conda activate cameratraps-detector
+
+You should now see `(cameratraps-detector)` instead of `(base)` at
+your command prompt.
+
+Set the PYTHONPATH: 
+
+    export PYTHONPATH="$PYTHONPATH:$HOME/git/CameraTraps:$HOME/git/ai4eutils:$HOME/git/yolov5"
+
+If you want PYTHONPATH to always automatically be set, add the above
+line to your .bashrc file. To do this, open your .bashrc file in an
+editor, such as emacs:
+
+    emacs ~/.bashrc
+    
+And paste this line at the end of the file:  
+
+    export PYTHONPATH="$PYTHONPATH:$HOME/git/CameraTraps:$HOME/git/ai4eutils:$HOME/git/yolov5"
+
+Save the file, exit and run:  
+
+    source ~/.bashrc
+    
+to reload your settings.
+
+When you want to deactivate the conda environment:
+
+    conda deactivate
+
+To re-activate when you need it:
+
+    conda activate cameratraps-detector`
+
+as you will in the next section.
+
+## Using MegaDetector to automatically generate boxed data
+
+With MegaDetector installed, you are now able to run MegaDetector on a
+given set of images:
+
+    conda activate cameratraps-detector
+    cd ~/git/CameraTraps
+    python detection/run_detector_batch.py ~/megadetector/md_v5a.0.0.pt ~/git/OIDv4_ToolKit/OID/Dataset/train/ ~/megadetector/test_output.json --recursive --checkpoint_frequency 10000
+
+Here, we have used the training images that were downloaded from OIDv4
+in the earlier part of this README as an example. If you were to use
+other data, you'd need to change the second argument of the last
+command to point the tool those images.
+
+This will produce a `test_output.json` output file and you can now
+proceed with using these detections to train a TFLite model. Make sure
+to deactivate your environment before moving on to the next steps:
+
+    conda deactivate
+
+And, actually, since these instructions said to allow conda to
+automatically load into the base conda environment you may need to
+deactivate from that, too (won't hurt anything to issue this command
+even if not currently in a conda environment):
+
+    conda deactivate
 
 ## Training custom TFLite models
 
-The `obj_det_train.py` file uses transfer learning to retrain an EfficientDet-Lite object detection model using a given set of images and their corresponding CSV file containing bounded box image data. This model is exported as a TFLite model so it can then be compiled and deployed for a Coral Edge TPU. The steps for this process are as follows:
-
-### Setting up virtualenvwrapper environments
-Following the training steps may require up to 3 virtual environments to keep each process working. To setup virtualenvwrapper:  
-```
-sudo pip install virtualenvwrapper
-```  
-Then edit your ~/.bashrc file with a text editor such as emacs using:  
-```
-emacs ~/.bashrc
-```  
-At the end of the file add the following lines:  
-```
-export WORKON_HOME=~/Envs  
-export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3  
-source /usr/local/bin/virtualenvwrapper.sh  
-```  
-Then run the script with:  
-`source ~/.bashrc`  
-This will reset your terminal and you can now use the commands:  
-```
-mkdir -p $WORKON_HOME  
-echo $WORKON_HOME  
-source /usr/local/bin/virtualenvwrapper.sh  
-```  
-You should now be able to create new virtual environments, for example a "camml_training" environment using:  
-`mkvirtualenv camml_training`  
-This will allow you to quickly activate or switch to environments with:  
-`workon camml_training`  
-And deactivate the environment with:  
-`deactivate`  
-Make sure your environment is deactivated before you set up your Anaconda environments.  
-
-### Setting up Anaconda environments
-Following the training steps will require at least one Anaconda environment for using Megadetector. To setup Anaconda we will use the same steps described [here](https://docs.anaconda.com/free/anaconda/install/linux/). First open your browser and download the Anaconda installer for Linux [here](https://www.anaconda.com/download/#linux). Open your terminal and enter:  
-`bash ~/Downloads/Anaconda3-2023.03-1-Linux-x86_64.sh`  
-Where "Downloads" is replaced by your path to the file and the `.sh` filename matches the one you downloaded. Next, press Enter to review the license agreement and press and hold Enter to scroll. Enter "yes" to agree to the license agreement. You can then use Enter to accept the default install location or enter a filepath to specify a different install location. The installation will begin which may take a few minutes. When finished you will be prompted to enter "yes" to initialize conda. You can now either close and reopen your terminal or use `source ~/.bashrc` to refresh the terminal. You should see "(base)" at your command line and you should be ready for the MegaDetector setup steps.  
-Use the following command to deactivate your conda environment:  
-`conda deactivate base`
-
-### Setting up Open Images Downloaderv4
-Open Images Downloaderv4 can be used to download sets of images by class, amount, and set type. This is a good tool to get your training and validation images as well as ground truth bounding box annotations. In particular, the conversion scripts will take the true validation annotations rather than try to guess them with MegaDetector. This makes our final evaluation metrics more trustworthy. You may need a new virtual environment for this step. To begin, enter into your command line:  
-```
-git clone https://github.com/EscVM/OIDv4_ToolKit.git   
-cd OIDv4_ToolKit   
-pip install -r requirements.txt  
-```  
-You can use OIDv4 to download images, for example:  
-```
-python main.py downloader --classes Cat Dog --type_csv train --limit 50  
-python main.py downloader --classes Cat Dog --type_csv validation --limit 50  
-```  
-When prompted enter "Y" to download the missing annotation file. You should now have 50 Cat and 50 Dog training images as well as 50 Cat and 50 Dog validation images in "/OIDv4_ToolKit/OID/Dataset/". Within your Cat and Dog folders will also be a "Label" folder with `.txt` annotation files for each image.
-
-### Setting up MegaDetector
-
-The steps for setting up and using Megadetector are described [here](https://github.com/microsoft/CameraTraps/blob/main/megadetector.md). As the instructions can be subject to change we will also guide you through the instructions ourselves, as they were presented to us at the time. All instructions will assume you're using a Linux operating system.  
-
-To setup and use MegaDetector you'll need [Anaconda](https://www.anaconda.com/products/individual) and Git installed. Anaconda is used to create self contained environment where you can pip install specific packages and dependencies without the worry of creating conflicts and breaking other setups. You may also need to have recent NVIDIA drivers if you plan to use a GPU to speed up detection.  
-
-Next you'll need to download a MegaDetector model file such as [MDv5a](https://github.com/ecologize/CameraTraps/releases/download/v5.0/md_v5a.0.0.pt). The instructions recommend putting this model file in a "megadetector" folder in your home directory, such as "/home/user/megadetector/", to match the rest of the instructions.  
-
-With Anaconda installed you should see "(base)" at your command prompt. Run the following instructions to clone the required github repositories and create the anaconda environment to run MegaDetector:
-```
-mkdir ~/git
-cd ~/git
-git clone https://github.com/ecologize/yolov5/
-git clone https://github.com/ecologize/CameraTraps
-git clone https://github.com/Microsoft/ai4eutils
-cd ~/git/CameraTraps/envs/
-conda env create --file environment-detector.yml
-conda activate cameratraps-detector
-export PYTHONPATH="$PYTHONPATH:$HOME/git/CameraTraps:$HOME/git/ai4eutils:$HOME/git/yolov5"
-```
-You should now see "(cameratraps-detector)" instead of "(base)" at your command prompt. Now we'll add the line to update our PYTHONPATH to our .bashrc file. Open your .bashrc file in an editor, such as emacs.  
-`emacs ~/.bashrc`  
-Add this line to the end of your .bashrc file:  
-`export PYTHONPATH="$PYTHONPATH:$HOME/git/CameraTraps:$HOME/git/ai4eutils:$HOME/git/yolov5"`  
-Then save, exit and run:  
-`source ~/.bashrc`  
-This will reload your terminal and you should now be able to activate the environment with:  
-`conda activate cameratraps-detector`  
-You are now able to run MegaDetector on a given set of images with the following code:  
-```
-cd ..
-python detection/run_detector_batch.py /home/user/megadetector/md_v5a.0.0.pt /home/user/image_folder/ /home/user/megadetector/test_output.json --recursive --checkpoint_frequency 10000
-```  
-This will produce your `test_output.json` output file and you can now proceed with using these detections to train a TFLite model. Make sure to deactivate your environment before moving on to the next steps:  
-`conda deactivate`
+The `obj_det_train.py` script uses transfer learning to retrain an
+EfficientDet-Lite object detection model using a given set of images
+and a corresponding CSV file containing bounded box image data that is
+in turn generated from the MegaDetector JSON file created above. This
+model is exported as a TFLite model so it can then be compiled and
+deployed for a Coral Edge TPU, which is one of the primary targets
+used in `camml`. The steps for this process are as follows:
 
 ### Install packages needed for TFLite Training
 
@@ -123,7 +294,7 @@ Install this Debian package (note: what is this a dependency of?)
 Re-activate the virtual environment you had created before (not the
 conda one):
 
-    workon camml_training
+    workon camml_tflite_training
 
 Install required pip packages:
 
@@ -131,60 +302,171 @@ Install required pip packages:
     pip install pycocotools
     pip install opencv-python-headless==4.1.2.30
     pip uninstall -y tensorflow && pip install tensorflow==2.8.0
+    pip install numpy==1.23.5
 
-#`pip install humanfriendly` (delete?)
+This may also be necessary (need to check):
+
+    pip install protobuf==3.20.3
+
+NOTE: we are installing lots of older versions of packages because at
+the time of the creation of this README that was what had been
+determined to be necessary for the core package, `tflite-model-maker`
+to function.
 
 ### Steps for training model
 
-1. Run megadetector on a desired set of images with `git/CameraTraps/run_detector_batch.py`. If you've completed the "Setting up MegaDetector steps you should be ready to go. This will produce an output `.json` file which contains the bounded box image data. The detections are made in 3 classes 1-animal, 2-person, and 3-vehicle.  
-Important Note: You can run MegaDetector on either all your images at once or only on your training images. If you choose all your images at once they will be randomly sorted between train, validation, and test with a roughly 80/10/10 split and all detections will be filtered by the same confidence value you provide. You should then use the `megadetector_json_to_csv.py` script for the next step. If you choose to run MegaDetector only on your training images you should use the `md_json_to_csv_valtest.py` script which will convert your MegaDetector output `.json` file as normal but then convert the validation and test OIDv4 annotations into the same format. This second method produces more trustworthy mean Average Precision metrics.  
-2. Use the `megadetector_json_to_csv.py` (or `md_json_to_csv_valtest.py`) script on your megadetector output `.json` file to produce a `.csv` file in the appropriate format for training the object detector. The 'person' and 'vehicle' detections will be excluded and the 'animal' class will be changed to the folder name where the images came from. For example: Any 'animal' detections on images from the directory /home/usr/images/Cat/ will change to 'Cat' detections in the CSV file. Since megadetector's detections each come with their own confidence score you can set the confidence argument to a value between 0 and 1, such as 0.9, to only include detections which have a confidence greater than or equal to this value. To run the script enter:    
-```
-mkdir ~/tflite_train
-python megadetector_json_to_csv.py ~/megadetector/test_output.json ~/tflite_train/test_output.csv 0.9
-```
-  
-3. Use the `obj_det_train.py` script to train the model and export to TFLite. You should now see a `model.tflite` file in your current directory. To run the script enter:
-```
-python obj_det_train.py ~/tflite/test_output.csv
-```
+NOTE: There may be some assumptons in the below process that you are
+using the training images that were downloaded as example data from
+OIDv4 in the earlier part of this README.  If you were to use other
+data, you would likely have to do some work to prepare it to match the
+format of that data. Instructions for doing this will ideally be added
+to this README later.
+
+#### 1. Run MegaDetector on the data
+
+Run megadetector on a desired set of images with
+`git/CameraTraps/run_detector_batch.py` (see instructions in earlier
+section of this README. If you've completed that section, you should
+be ready to go and can skip this step). This will produce an output
+`.json` file which contains the bounded box image data.
+
+Important Note: You can run MegaDetector on either all your images at
+once or only on your training images. If you choose all your images at
+once they will be randomly sorted between train, validation, and test
+with a roughly 80/10/10 split and all detections will be filtered by
+the same confidence value you provide. You should then use the
+`megadetector_json_to_csv.py` script for the next step. If you choose
+to run MegaDetector only on your training images you should use the
+`md_json_to_csv_valtest.py` script which will convert your
+MegaDetector output `.json` file as normal but then convert the
+validation and test OIDv4 annotations into the same format (NOTE: we
+might want to look into whether we want to grab the OID boxes for
+validation as well as test if this is indeed what is happening (is
+what the README just said).  The plan had been to only grab test
+boxes from OID.  Probably hasn't affected things too much to have val
+boxes come from manual labels to this stage as I don't believe folks
+were tuning training based on validation but once we are, might want
+to have a think about what it means to do so and whether it is better
+or worse than the original plan). This second method produces more
+trustworthy mean Average Precision metrics.
+
+#### 2. Generate CSV for training from MegaDetector JSON
+
+Use the `megadetector_json_to_csv.py` (or `md_json_to_csv_valtest.py`)
+script on your megadetector output `.json` file to produce a `.csv`
+file in the appropriate format for training the object
+detector. MegaDetector detections are one of 3 classes, with a number
+representing each class: 1 for animal, 2 for person, and 3 for
+vehicle.  The 'person' and 'vehicle' detections will be excluded by
+the CSV preparation scripts and the 'animal' class will be changed to
+the folder name where the images came from. For example: Any 'animal'
+detections on images from the directory /home/usr/images/Cat/ will
+change to 'Cat' detections in the CSV file. Since Megadetector's
+detections each come with their own confidence score you can set the
+confidence argument to a value between 0 and 1, such as 0.9, to only
+include detections which have a confidence greater than or equal to
+this value.
+
+To run the script enter:
+
+    cd ~/git/camml/training/
+    mkdir ~/tflite_train
+    python megadetector_json_to_csv.py ~/megadetector/test_output.json ~/tflite_train/test_output.csv 0.9
+
+
+#### 3. Perform training using CSV as input
+
+Use the `obj_det_train.py` script to train the model and export a
+TFLite model:
+
+    python obj_det_train.py ~/tflite_train/test_output.csv
+
+NOTE: Known issue in some installs when running previous line has been that
+TensorFlow needs permissions on /tmp and doesn't have them.  The fix
+has been to make sure Tensorflow can write its cache by storing it in
+user's own space:
+
+    export TFHUB_CACHE_DIR=./tmp
+
+If `obj_det_train.py` script did run successfully, you should now see
+a `model.tflite` file in your current directory.
   
 You can now deactivate the virtual environment you used for training:
 
     deactivate
   
 ### Compile the TFLite model for the Edge TPU
-You may need a new virtual environment to compile this model for the Coral.  
-`curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -`  
-```
-echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list
-```  
-`sudo apt-get update`  
-`sudo apt-get install edgetpu-compiler`  
-  
-`sudo apt-get install libedgetpu1-std`  
-`sudo apt-get install python3-pycoral`  
-`git clone https://github.com/google-coral/pycoral.git`  
 
-Compile model to run on  1 Edge TPU:
-`edgetpu_compiler model.tflite --num_segments=1`
+Install necessary packages:
 
-### Test the model on Coral Edge TPU
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+    echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list
+    sudo apt update
+    sudo apt install edgetpu-compiler
+    sudo apt install libedgetpu1-std
 
-A labels.txt file will need to be made containing class names such as:
-```
-0 Cat
-1 Dog
-```  
+NOTE: Is last package necessary for this step? Or maybe it belongs
+in next section as it is only required there?
+
+Compile model to run on one Edge TPU:
+
+    cd ~/git/camml/training
+    edgetpu_compiler model.tflite --num_segments=1
+
+This will create a file called model_edgetpu.tflite sitting in active
+directory.
+
+Deactivate the virtual environment you were working in:
+
+    deactivate
+
+### Test the trained model on Coral Edge TPU
+
+These instructions are specifically for testing the model on a Coral
+USB Accelerator device (as opposed to another Coral TPU-enabled
+device/product).
+
+Deactivate all virtual environments you were working with. Install the
+pycoral Debian package:
+
+    sudo apt install python3-pycoral
+
+At this point, you should physically connect the USB Coral Accelerator
+to the computer.
+
+A label map file will need to be created containing class names such
+as: ``` 0 Cat 1 Dog ```
+
+You can extract this label map from the non-edgetpu tflite model by
+unzipping it:
+
+    unzip model.tflite
+
+This produces a file called `labelmap.txt` with each class label on
+its own line (the class labels are in order so that the line number
+corresponds with the class index associated with the class label)
 
 Run the Edge compiled TFLite model on the Coral:  
-```
-python3 /pycoral/examples/detect_image.py --model model_edgetpu.tflite --labels labels.txt --input animal.jpg --output animal_result.jpg
-```  
 
-If this step fails, you may also need to install the TFLite runtime associated with your Linux OS and Python versions.  
+    python3 /usr/share/pycoral/examples/detect_image.py --model model_edgetpu.tflite --labels labelmap.txt --input animal.jpg --output animal_result.jpg
+
+Where animal.jpg is any animal photo you have lying around or perhaps
+one from the test data set.  You could use an image from the training
+set just to see that the script runs without issue but be wary that
+the model will perform particularly/misleadingly well on data it was
+trained with (for clear reasons).
+
+NOTE: if using current `pillow` package (as of 2023-11-27) the script
+will fail due to a change in `pillow` that is not reflected in the
+`detect_image.py`. Here's a hacky fix:
+
+   sed -i 's/ANTIALIAS/LANCZOS/g' /usr/share/pycoral/examples/detect_image.py
+
+If this step fails, you may also need to install the TFLite runtime
+associated with your Linux OS and Python versions.
 
 ## Training custom YOLOv8 models
+
 Yolov8 models use individual PyTorch `.txt` annotation files which are each associated with an image. These annotation files should be in a folder at the same level as the images folder such as "/home/user/project/images/" and "/home/user/project/labels/". You will need a `.yaml` file that contains the path to the train, validation, and test directories as well as the number of classes in your dataset and the class names. The conversion script `megadetector_json_to_pt.py` will use the megadetector output file and the path to your validation images to create a folder structure with symlinked images and `.txt` files in the required format. It will also create the necessary  data.yaml file for training. For example:  
 ```
 train: /home/user/yolov8_training_data/train/images  
@@ -195,15 +477,26 @@ nc: 2
 names: ['Cat', 'Dog']
 ```  
 
-### Setting up Open Images Downloaderv4
-Follow the "Setting up Open Images Downloaderv4" steps as described in the "Training custom TFLite models" section.  
+### Download some example data
+
+To try out the pipeline with an example dataset, follow the steps for
+installing the Open Images v4 data downloader as described in an
+earlier section.
 
 ### Setting up megadetector
 Follow the "Setting up megadetector" steps as described in the "Training custom TFLite models" section.  
 
-### Install packages
-You should create a new virtual environment before pip installing.  
-`pip install ultralytics`  
+### Install necessary package dependencies
+
+You should switch to the virtual environment you created before for
+this training before installing the pip packages associated with this
+training pipeline:
+
+    workon camml_yolov8_training
+
+And then install the packages:
+
+    pip install ultralytics`  
 
 ### (Optional) Install MLops software
 If you want to visualize your training data and results you can use ClearML. You will have to create an account and verify your credentials, then any YOLOv8 training experiment ran in this terminal will be logged to your ClearML dashboard.  
