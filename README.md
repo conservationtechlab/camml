@@ -336,25 +336,33 @@ the same confidence value you provide. You should then use the
 to run MegaDetector only on your training images you should use the
 `md_json_to_csv_valtest.py` script which will convert your
 MegaDetector output `.json` file as normal but then convert the
-validation and test OIDv4 annotations into the same format. This
-second method produces more trustworthy mean Average Precision
-metrics.
+validation and test OIDv4 annotations into the same format (NOTE: we
+might want to look into whether we want to grab the OID boxes for
+validation as well as test if this is indeed what is happening (is
+what the README just said).  The plan had been to only grab test
+boxes from OID.  Probably hasn't affected things too much to have val
+boxes come from manual labels to this stage as I don't believe folks
+were tuning training based on validation but once we are, might want
+to have a think about what it means to do so and whether it is better
+or worse than the original plan). This second method produces more
+trustworthy mean Average Precision metrics.
 
-#### 2. Prep CSV for training from MegaDetector JSON
+#### 2. Generate CSV for training from MegaDetector JSON
 
 Use the `megadetector_json_to_csv.py` (or `md_json_to_csv_valtest.py`)
 script on your megadetector output `.json` file to produce a `.csv`
 file in the appropriate format for training the object
 detector. MegaDetector detections are one of 3 classes, with a number
-representing each class: 1 for animal, 2 for person, and 3 for ehicle.
-The 'person' and 'vehicle' detections will be excluded by this script
-and the 'animal' class will be changed to the folder name where the
-images came from. For example: Any 'animal' detections on images from
-the directory /home/usr/images/Cat/ will change to 'Cat' detections in
-the CSV file. Since megadetector's detections each come with their own
-confidence score you can set the confidence argument to a value
-between 0 and 1, such as 0.9, to only include detections which have a
-confidence greater than or equal to this value.
+representing each class: 1 for animal, 2 for person, and 3 for
+vehicle.  The 'person' and 'vehicle' detections will be excluded by
+the CSV preparation scripts and the 'animal' class will be changed to
+the folder name where the images came from. For example: Any 'animal'
+detections on images from the directory /home/usr/images/Cat/ will
+change to 'Cat' detections in the CSV file. Since Megadetector's
+detections each come with their own confidence score you can set the
+confidence argument to a value between 0 and 1, such as 0.9, to only
+include detections which have a confidence greater than or equal to
+this value.
 
 To run the script enter:
 
@@ -377,8 +385,8 @@ user's own space:
 
     export TFHUB_CACHE_DIR=./tmp
 
-If `obj_det_train.py` did run successfully, you should now see a
-`model.tflite` file in your current directory.
+If `obj_det_train.py` script did run successfully, you should now see
+a `model.tflite` file in your current directory.
   
 You can now deactivate the virtual environment you used for training:
 
