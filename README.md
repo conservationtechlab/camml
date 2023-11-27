@@ -403,10 +403,6 @@ Install necessary packages:
     echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list
     sudo apt update
     sudo apt install edgetpu-compiler
-    sudo apt install libedgetpu1-std
-
-NOTE: Is last package necessary for this step? Or maybe it belongs
-in next section as it is only required there?
 
 Compile model to run on one Edge TPU:
 
@@ -426,10 +422,11 @@ These instructions are specifically for testing the model on a Coral
 USB Accelerator device (as opposed to another Coral TPU-enabled
 device/product).
 
-Deactivate all virtual environments you were working with. Install the
-pycoral Debian package:
+Deactivate all virtual environments you were working with. Install
+these packages:
 
-    sudo apt install python3-pycoral
+    sudo apt install libedgetpu1-std
+    sudo apt install pycoral-examples
 
 At this point, you should physically connect the USB Coral Accelerator
 to the computer.
@@ -460,10 +457,11 @@ NOTE: if using current `pillow` package (as of 2023-11-27) the script
 will fail due to a change in `pillow` that is not reflected in the
 `detect_image.py`. Here's a hacky fix:
 
-   sed -i 's/ANTIALIAS/LANCZOS/g' /usr/share/pycoral/examples/detect_image.py
+   sudo sed -i 's/ANTIALIAS/LANCZOS/g' /usr/share/pycoral/examples/detect_image.py
 
-If this step fails, you may also need to install the TFLite runtime
-associated with your Linux OS and Python versions.
+If this `detect_image.py` script still fails, you may also need to
+install the TFLite runtime associated with your Linux OS and Python
+versions.
 
 ## Training custom YOLOv8 models
 
