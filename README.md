@@ -42,7 +42,7 @@ The first step is to clone this repository:
     cd ~/git
     git clone https://github.com/conservationtechlab/camml.git
 
-## Setting up virtualenvwrapper environments
+## Setting up virtualenv environments
 
 As always, it is advisable to keep your python environments for
 specific tasks (like this training process) separate from your main
@@ -76,19 +76,22 @@ Create the folder you've designated for the virtual environments:
     mkdir -p $WORKON_HOME  
 
 You should now be able to create new virtual environments.  In this
-README, we'll use one called `camml_training` and we will create it
-thusly:
+README, we'll use one called `camml_tflite_training` for the
+EfficientDet TFLITE training pipeline and one called
+`camml_yolov8_training` for the YOLOv8 training pipeline and we will
+create them thusly:
 
-    mkvirtualenv camml_training
+    mkvirtualenv camml_tflite_training
+    mkvirtualenv camml_yolov8_training
 
-The environment will be activated after you created it. When you want
-to deactivate it:
+Each environment will be activated after you created it. When you want
+to deactivate a given virtualenv environment:
 
     deactivate
 
 And to re-activate it when you need it again:
 
-    workon camml_training
+    workon camml_tflite_training
 
 Make sure your environment is deactivated before you set up or activate your
 Anaconda environments for Megadetector later in the README.
@@ -111,7 +114,7 @@ Clone OpenImagesv4 downloader tool and install its dependencies:
     cd ~/git           
     git clone https://github.com/EscVM/OIDv4_ToolKit.git
     cd OIDv4_ToolKit
-    workon camml_training
+    workon camml_tflite_training
     pip install -r requirements.txt
 
 Run tool. To download 50 images each of cats and dogs from the
@@ -291,7 +294,7 @@ Install this Debian package (note: what is this a dependency of?)
 Re-activate the virtual environment you had created before (not the
 conda one):
 
-    workon camml_training
+    workon camml_tflite_training
 
 Install required pip packages:
 
@@ -413,25 +416,54 @@ Compile model to run on one Edge TPU:
 This will create a file called model_edgetpu.tflite sitting in active
 directory.
 
+Deactivate the virtual environment you were working in:
+
+    deactivate
+
 ### Test the trained model on Coral Edge TPU
 
 These instructions are specifically for testing the model on a Coral
-USB Accelerator device.
+USB Accelerator device (as opposed to another Coral TPU-enabled
+device/product).
 
-INCLUDE INSTRUCTIONS FOR SETTING UP FOR RUNNING ON CORAL USB ACCELERATOR.
+Deactivate all virtual environments you were working with. Install the
+pycoral Debian package:
 
     sudo apt install python3-pycoral
 
-A labels.txt file will need to be made containing class names such as
-(note: this labels file should actually be extractable from the tflite
-file via unzip. add instructions): ``` 0 Cat 1 Dog ```
+At this point, you should physically connect the USB Coral Accelerator
+to the computer.
+
+A label map file will need to be created containing class names such
+as: ``` 0 Cat 1 Dog ```
+
+You can extract this label map from the non-edgetpu tflite model by
+unzipping it:
+
+    unzip model.tflite
+
+This produces a file called `labelmap.txt` with each class label on
+its own line (the class labels are in order so that the line number
+corresponds with the class index associated with the class label)
 
 Run the Edge compiled TFLite model on the Coral:  
-```
-python3 /pycoral/examples/detect_image.py --model model_edgetpu.tflite --labels labels.txt --input animal.jpg --output animal_result.jpg
-```  
 
-If this step fails, you may also need to install the TFLite runtime associated with your Linux OS and Python versions.  
+    python3 /usr/share/pycoral/examples/detect_image.py --model model_edgetpu.tflite --labels labelmap.txt --input animal.jpg --output animal_result.jpg
+
+Where animal.jpg is any animal photo you have lying around or perhaps
+one from the test data set.  You could use an image from the training
+set just to see that the script runs without issue but be wary that
+the model will perform particularly/misleadingly well on data it was
+trained with (for clear reasons).
+
+NOTE: if using current `pillow` package (as of 2023-11-27) the script
+will fail due to a change in `pillow` that is not reflected in the
+`detect_image.py`. Here's a hacky fix:
+
+   sed -i 's/ANTIALIAS/LANCZOS/g' /usr/share/pycoral/examples/detect_image.py
+
+If this step fails, you may also need to install the TFLite runtime
+associated with your Linux OS and Python versions.
 
 ## Training custom YOLOv8 models
 
@@ -445,15 +477,26 @@ nc: 2
 names: ['Cat', 'Dog']
 ```  
 
-### Setting up Open Images Downloaderv4
-Follow the "Setting up Open Images Downloaderv4" steps as described in the "Training custom TFLite models" section.  
+### Download some example data
+
+To try out the pipeline with an example dataset, follow the steps for
+installing the Open Images v4 data downloader as described in an
+earlier section.
 
 ### Setting up megadetector
 Follow the "Setting up megadetector" steps as described in the "Training custom TFLite models" section.  
 
-### Install packages
-You should create a new virtual environment before pip installing.  
-`pip install ultralytics`  
+### Install necessary package dependencies
+
+You should switch to the virtual environment you created before for
+this training before installing the pip packages associated with this
+training pipeline:
+
+    workon camml_yolov8_training
+
+And then install the packages:
+
+    pip install ultralytics`  
 
 ### (Optional) Install MLops software
 If you want to visualize your training data and results you can use ClearML. You will have to create an account and verify your credentials, then any YOLOv8 training experiment ran in this terminal will be logged to your ClearML dashboard.  
