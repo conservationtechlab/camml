@@ -255,14 +255,14 @@ given set of images:
 
     conda activate cameratraps-detector
     cd ~/git/CameraTraps
-    python detection/run_detector_batch.py ~/megadetector/md_v5a.0.0.pt ~/git/OIDv4_ToolKit/OID/Dataset/train/ ~/megadetector/test_output.json --recursive --checkpoint_frequency 10000
+    python detection/run_detector_batch.py ~/megadetector/md_v5a.0.0.pt ~/git/OIDv4_ToolKit/OID/Dataset/train/ ~/megadetector/demo.json --recursive --checkpoint_frequency 10000
 
 Here, we have used the training images that were downloaded from OIDv4
 in the earlier part of this README as an example. If you were to use
 other data, you'd need to change the second argument of the last
 command to point the tool those images.
 
-This will produce a `test_output.json` output file and you can now
+This will produce a `demo.json` output file and you can now
 proceed with using these detections to train a TFLite model. Make sure
 to deactivate your environment before moving on to the next steps:
 
@@ -363,7 +363,7 @@ the folder name where the images came from. For example: Any 'animal'
 detections on images from the directory /home/usr/images/Cat/ will
 change to 'Cat' detections in the CSV file. Since Megadetector's
 detections each come with their own confidence score you can set the
-confidence argument to a value between 0 and 1, such as 0.9, to only
+confidence argument to a value between 0 and 1, such as 0.15, to only
 include detections which have a confidence greater than or equal to
 this value.
 
@@ -371,7 +371,7 @@ To run the script enter:
 
     cd ~/git/camml/training/
     mkdir ~/tflite_train
-    python megadetector_json_to_csv.py ~/megadetector/test_output.json ~/tflite_train/test_output.csv 0.9
+    python megadetector_json_to_csv.py ~/megadetector/demo.json ~/tflite_train/demo.csv 0.15
 
 
 #### 3. Perform training using CSV as input
@@ -379,7 +379,7 @@ To run the script enter:
 Use the `obj_det_train.py` script to train the model and export a
 TFLite model:
 
-    python obj_det_train.py ~/tflite_train/test_output.csv
+    python obj_det_train.py ~/tflite_train/demo.csv ~/tflite_train/demo -m demo.tflite
 
 NOTE: Known issue in some installs when running previous line has been that
 TensorFlow needs permissions on /tmp and doesn't have them.  The fix
@@ -410,8 +410,8 @@ in next section as it is only required there?
 
 Compile model to run on one Edge TPU:
 
-    cd ~/git/camml/training
-    edgetpu_compiler model.tflite --num_segments=1
+    cd ~/tflite_train/demo/
+    edgetpu_compiler demo.tflite --num_segments=1
 
 This will create a file called model_edgetpu.tflite sitting in active
 directory.
@@ -440,7 +440,7 @@ as: ``` 0 Cat 1 Dog ```
 You can extract this label map from the non-edgetpu tflite model by
 unzipping it:
 
-    unzip model.tflite
+    unzip demo.tflite
 
 This produces a file called `labelmap.txt` with each class label on
 its own line (the class labels are in order so that the line number
@@ -448,7 +448,7 @@ corresponds with the class index associated with the class label)
 
 Run the Edge compiled TFLite model on the Coral:  
 
-    python3 /usr/share/pycoral/examples/detect_image.py --model model_edgetpu.tflite --labels labelmap.txt --input animal.jpg --output animal_result.jpg
+    python3 /usr/share/pycoral/examples/detect_image.py --model demo_edgetpu.tflite --labels labelmap.txt --input animal.jpg --output animal_result.jpg
 
 Where animal.jpg is any animal photo you have lying around or perhaps
 one from the test data set.  You could use an image from the training
@@ -511,10 +511,9 @@ Then paste your credential information and your results should be automatically 
 1. Run megadetector on a desired set of images with `git/CameraTraps/run_detector_batch.py`. If you've completed the "Setting up MegaDetector steps you should be ready to go. We recommend running megadetector only on your training images to keep your test and validation sets untouched. This will produce an output `.json` file which contains the bounded box image data. The detections are made in 3 classes 1-animal, 2-person, and 3-vehicle.  
 Important Note: A training image set and validation image set is required to train a YOLOv8 model, the test image set is optional. You should run MegaDetector only on your training images. If you don't include a test image set you should then use the `md_json_to_pt_val.py` script for the next step. If you choose to include a test image set then you should use the `md_json_to_pt_valtest.py` script which will convert your MegaDetector output `.json` file as normal but then convert the validation and test OIDv4 annotations into the same format. This second method should produce more trustworthy mean Average Precision metrics but results are inconclusive.  
 
-2. Use the `md_json_to_pt_val.py` (or `md_json_to_pt_valtest.py`) script on your megadetector output `.json` file to produce PyTorch `.txt` files in the appropriate format for training the object detector. The script will create a "yolov8_training_data/train/images" and "yolov8_training_data/train/labels" directory structure at your current directory level. Similarly, a "yolov8_training_data/validation/images" and "yolov8_training_data/validation/labels/" will also be created. The megadetector output will be converted and stored in the "train" folder while the given validation data will be converted and stored in the "validation" folder. Symlinks of each image will be created so our Yolo training works without issue. The 'person' and 'vehicle' detections will be excluded and each detection will be given a class number to match the classes in the `data.yaml` file. Since megadetector's detections each come with their own confidence score you can set the confidence argument to a value between 0 and 1, such as 0.9, to only include detections which have a confidence greater than or equal to this value. To run the script enter:    
-```
-python megadetector_json_to_pt.py test_output.json /home/user/project/validation/  0.9
-```
+2. Use the `md_json_to_pt_val.py` (or `md_json_to_pt_valtest.py`) script on your megadetector output `.json` file to produce PyTorch `.txt` files in the appropriate format for training the object detector. The script will create a "yolov8_training_data/train/images" and "yolov8_training_data/train/labels" directory structure at your current directory level. Similarly, a "yolov8_training_data/validation/images" and "yolov8_training_data/validation/labels/" will also be created. The megadetector output will be converted and stored in the "train" folder while the given validation data will be converted and stored in the "validation" folder. Symlinks of each image will be created so our Yolo training works without issue. The 'person' and 'vehicle' detections will be excluded and each detection will be given a class number to match the classes in the `data.yaml` file. Since megadetector's detections each come with their own confidence score you can set the confidence argument to a value between 0 and 1, such as 0.9, to only include detections which have a confidence greater than or equal to this value. To run the script enter:
+    
+    python megadetector_json_to_pt.py demo.json /home/user/project/validation/  0.9
   
 3. A YOLOv8 model file will automatically be downloaded when you begin training, or you can download the model file yourself [here](https://docs.ultralytics.com/models/yolov8/#supported-tasks). These instructions will use the `yolov8n.pt` model. Your model file and `data.yaml` file should both be in your current working directory.  
 
