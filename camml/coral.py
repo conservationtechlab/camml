@@ -43,7 +43,7 @@ class ImageClassifierHandler():
 
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame = Image.fromarray(frame).convert('RGB').resize(self.input_size,
-                                                             Image.ANTIALIAS)
+                                                             Image.LANCZOS)
         common.set_input(self.interpreter, frame)
 
         start = time.perf_counter()
@@ -93,7 +93,7 @@ class ObjectDetectorHandler():
         _, scale = common.set_resized_input(self.interpreter,
                                             frame.size,
                                             lambda size: frame.resize(size,
-                                                                      Image.ANTIALIAS))
+                                                                      Image.LANCZOS))
 
         start = time.perf_counter()
         self.interpreter.invoke()
