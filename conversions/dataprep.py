@@ -1,9 +1,39 @@
 """Data prep tools
 
-Currently simply functions required by the conversion scripts in this
-folder
+Currently, is simply functions required by various of the conversion
+scripts in this folder.
 
 """
+
+
+def write_detection_to_csv(csv_writer, detection, set_type,
+                           image_path, class_label,
+                           confidence_threshold=.15):
+    # pylint: disable=too-many-arguments
+
+    """Write positive detection into CSV file
+
+    Megadetector uses 3 categories 1-animal, 2-person, 3-vehicle.
+    This camml training workflow assumes that we only want the animal
+    detections in the training set so this function filters out the
+    other two categories. The 'confidence_threshold' argument further
+    filters the detections so only >= conf detections appear.  One
+    might try to tune this threshold as a hyperparameter of training,
+    the goal being to get as much "good" data in as possible while not
+    using "bad" MegaDetector detections in training.
+
+    """
+    if (detection['category'] == '1'
+       and detection['conf'] >= confidence_threshold):
+        csv_writer.writerow([set_type,
+                             image_path,
+                             class_label,
+                             detection['bbox'][0],
+                             detection['bbox'][1],
+                             None, None,
+                             detection['bbox'][2],
+                             detection['bbox'][3],
+                             None, None])
 
 
 def bbox_to_pascal(bbox):
@@ -42,5 +72,3 @@ def coco_to_pascal_voc(x_tl, y_tl, width, height):
         y_max (float):Float representing the max y coordinate of the bbox
     """
     return [x_tl, y_tl, x_tl + width, y_tl + height]
-
-

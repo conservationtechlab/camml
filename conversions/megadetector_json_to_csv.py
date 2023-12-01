@@ -6,11 +6,11 @@
 
  Run as:
      python megadetector_json_to_csv.py output.json new_output.csv \
-     /home/user/image_folder/ 0.9
+     /home/user/image_folder/ 0.15
 
  Or to include blank detections(causes an error when training):
      python megadetector_json_to_csv.py output.json new_output.csv \
-     /home/user/image_folder/ 0.9 --include
+     /home/user/image_folder/ 0.15 --include
 """
 
 import json
@@ -18,7 +18,7 @@ import csv
 import argparse
 import random
 
-from dataprep import bbox_to_pascal
+from dataprep import bbox_to_pascal, write_detection_to_csv
 
 
 def main():
@@ -29,7 +29,6 @@ def main():
     '', '', xmax, ymax, '', ''].
 
     """
-    # pylint: disable=locally-disabled, too-many-locals
     # Get command line arguments when running program
     parser = argparse.ArgumentParser()
     parser.add_argument("input_file", type=str,
@@ -61,16 +60,16 @@ def main():
 
             # Get the class label from the image file name
             new_label = img['file'].strip('/').split('/')[-2]
-            
+
             if 'failure' in img.keys():
                 print(img['file'] + ' failed to access.\n')
             else:
                 for detection in img['detections']:
                     # convert bbox to Pascal VOC
                     bbox_to_pascal(detection['bbox'])
-                    
-                    # Randomly set 80% of images to train,
-                    # 10% to validation, and 10% to test. Currently all set
+
+                    # Randomly set 80% of images to train, 10% to
+                    # validation, and 10% to test.
                     # random.seed(42)  # for testing
                     rand_num = random.randint(1, 100)
                     set_type = ''
@@ -82,20 +81,10 @@ def main():
                     elif rand_num <= 100:
                         set_type = 'TEST'
 
-                    # Megadetector uses 3 categories 1-animal, 2-person,
-                    # 3-vehicle, only the animal detections are needed
-                    # Filters detections so only >= conf detections appear
-                    if (detection['category'] == '1'
-                            and detection['conf'] >= args.conf):
-                        csv_writer.writerow([set_type,
-                                             image_path,
-                                             new_label,
-                                             detection['bbox'][0],
-                                             detection['bbox'][1],
-                                             None, None,
-                                             detection['bbox'][2],
-                                             detection['bbox'][3],
-                                             None, None])
+                    write_detection_to_csv(csv_writer, detection,
+                                           set_type, image_path,
+                                           new_label,
+                                           confidence_threshold=args.conf)
 
                 # To make images with no detections appear in the csv file
                 if args.include:
