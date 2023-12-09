@@ -18,7 +18,9 @@ import csv
 import argparse
 import random
 
-from dataprep import bbox_to_pascal, write_detection_to_csv
+from dataprep import bbox_to_pascal, add_md_detection_to_csv
+
+TESTING = False
 
 
 def main():
@@ -42,16 +44,12 @@ def main():
                         dest='include', action='store_true')
     args = parser.parse_args()
 
-    # Opening JSON file and loading the data
-    # into the variable data
     with open(args.input_file, encoding="utf-8") as json_file:
         data = json.load(json_file)
 
     image_data = data['images']
 
-    # Open a file for writing
     with open(args.output_file, 'w', encoding="utf-8") as data_file:
-        # Create the csv writer object
         csv_writer = csv.writer(data_file)
 
         for img in image_data:
@@ -59,9 +57,13 @@ def main():
             image_path = img['file']
 
             # Get the class label from the image file name
-            new_label = img['file'].strip('/').split('/')[-2]
+            new_label = image_path.strip('/').split('/')[-2]
 
             if 'failure' in img.keys():
+                # NOTE: maybe we should add a more explanatory error
+                # message.  Eg what is it that causes the string
+                # 'failure' to be in img.keys()?  Is that something
+                # comes from MD?
                 print(img['file'] + ' failed to access.\n')
             else:
                 for detection in img['detections']:
@@ -70,7 +72,8 @@ def main():
 
                     # Randomly set 80% of images to train, 10% to
                     # validation, and 10% to test.
-                    # random.seed(42)  # for testing
+                    if TESTING:
+                        random.seed(42)
                     rand_num = random.randint(1, 100)
                     set_type = ''
 
@@ -81,10 +84,10 @@ def main():
                     elif rand_num <= 100:
                         set_type = 'TEST'
 
-                    write_detection_to_csv(csv_writer, detection,
-                                           set_type, image_path,
-                                           new_label,
-                                           confidence_threshold=args.conf)
+                    add_md_detection_to_csv(csv_writer, detection,
+                                            set_type, image_path,
+                                            new_label,
+                                            confidence_threshold=args.conf)
 
                 # To make images with no detections appear in the csv file
                 if args.include:

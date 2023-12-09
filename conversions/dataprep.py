@@ -4,14 +4,41 @@ Currently, is simply functions required by various of the conversion
 scripts in this folder.
 
 """
+from PIL import Image
 
 
-def write_detection_to_csv(csv_writer, detection, set_type,
-                           image_path, class_label,
-                           confidence_threshold=.15):
+def add_oid_annotations_to_csv(csv_writer, image_path,
+                               annotation_file, set_type):
+    """Add all annotations for an OID image to csv file
+
+    """
+    img = Image.open(image_path)
+    width, height = img.size
+
+    with open(annotation_file, 'r', encoding='utf-8') as annos_file:
+        annotations = annos_file.readlines()
+        for annotation in annotations:
+            annotation = annotation.split()
+
+            class_label = annotation[0]
+
+            # normalize each bbox
+            x_1 = round(float(annotation[1]) / width, 4)
+            y_1 = round(float(annotation[2]) / height, 4)
+            x_2 = round(float(annotation[3]) / width, 4)
+            y_2 = round(float(annotation[4]) / height, 4)
+
+            csv_writer.writerow([set_type, image_path, class_label,
+                                 x_1, y_1, None, None, x_2, y_2, None,
+                                 None])
+
+
+def add_md_detection_to_csv(csv_writer, detection, set_type,
+                            image_path, class_label,
+                            confidence_threshold=.15):
     # pylint: disable=too-many-arguments
 
-    """Write positive detection into CSV file
+    """Filtering for 'animal', write MD detection into CSV
 
     Megadetector uses 3 categories 1-animal, 2-person, 3-vehicle.
     This camml training workflow assumes that we only want the animal
@@ -23,17 +50,17 @@ def write_detection_to_csv(csv_writer, detection, set_type,
     using "bad" MegaDetector detections in training.
 
     """
-    if (detection['category'] == '1'
+    if (detection['category'] == '1'  # MD has labeled it as an 'animal'
        and detection['conf'] >= confidence_threshold):
-        csv_writer.writerow([set_type,
-                             image_path,
-                             class_label,
-                             detection['bbox'][0],
-                             detection['bbox'][1],
-                             None, None,
-                             detection['bbox'][2],
-                             detection['bbox'][3],
-                             None, None])
+
+        bbox = detection['bbox']
+        x_1 = bbox[0]
+        y_1 = bbox[1]
+        x_2 = bbox[2]
+        y_2 = bbox[3]
+
+        csv_writer.writerow([set_type, image_path, class_label, x_1,
+                             y_1, None, None, x_2, y_2, None, None])
 
 
 def bbox_to_pascal(bbox):

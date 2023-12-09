@@ -23,9 +23,10 @@ import argparse
 import random
 import glob
 
-from PIL import Image
+from dataprep import bbox_to_pascal
+from dataprep import add_md_detection_to_csv, add_oid_annotations_to_csv
 
-from dataprep import bbox_to_pascal, write_detection_to_csv
+TESTING = False
 
 
 def main():
@@ -76,7 +77,8 @@ def main():
 
                     # Randomly set 90% of images to train,
                     # and 10% to test.
-                    # random.seed(42)  # for testing
+                    if TESTING:
+                        random.seed(42)
                     rand_num = random.randint(1, 100)
                     set_type = ''
 
@@ -85,12 +87,10 @@ def main():
                     elif rand_num <= 100:
                         set_type = 'TEST'
 
-                    # Get the class name from the image file name
-
-                    write_detection_to_csv(csv_writer, detection,
-                                           set_type, image_path,
-                                           new_label,
-                                           confidence_threshold=args.conf)
+                    add_md_detection_to_csv(csv_writer, detection,
+                                            set_type, image_path,
+                                            new_label,
+                                            confidence_threshold=args.conf)
 
                 # To make images with no detections appear in the csv file
                 if args.include:
@@ -101,11 +101,15 @@ def main():
                                              None, None, None,
                                              None, None, None])
 
-        # Iterate through OID labels
-        # Convert OID annotations to autoML format
-        # Write validation annotations to csv
-        folder = image_path.rfind('train')
-        val_img_path = os.path.join(image_path[:folder] + 'validation/')
+        # Retrieve validation annotation data from manually labelled
+        # OID validation and write that into the data CSV.  Looks like
+        # there is an assumption that only the classes that are
+        # represented into the JSON are present in the validation
+        # folder. Probably should address that assumption.
+        set_type = 'VALIDATION'
+
+        path_index = image_path.rfind('train')
+        val_img_path = os.path.join(image_path[:path_index] + 'validation/')
 
         # Go to the label folder path and gather all text files recursively
         txt_files = sorted(glob.glob(val_img_path + '/**/*.txt',
@@ -115,35 +119,7 @@ def main():
 
         # For each text file change the annotations and write to csv
         for (txt, img) in zip(txt_files, img_files):
-            with open(txt,
-                      'r', encoding='utf-8') as current_file:
-                val_img = Image.open(img)
-
-                width, height = val_img.size
-
-                val_data = current_file.read()
-
-                val_data = val_data.split('\n')
-                val_data = val_data[:-1]
-
-                # Set all annotatins to validation
-                set_type = 'VALIDATION'
-
-                # For each detection change to normalized xyxy
-                for element in val_data:
-                    detections = element.split()
-
-                    detections[1] = round(float(detections[1]) / width, 4)
-                    detections[2] = round(float(detections[2]) / height, 4)
-                    detections[3] = round(float(detections[3]) / width, 4)
-                    detections[4] = round(float(detections[4]) / height, 4)
-
-                    csv_writer.writerow([set_type,
-                                         img,
-                                         detections[0], detections[1],
-                                         detections[2], None, None,
-                                         detections[3], detections[4],
-                                         None, None])
+            add_oid_annotations_to_csv(csv_writer, img, txt, set_type)
 
 
 if __name__ == "__main__":
