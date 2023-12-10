@@ -1,10 +1,10 @@
 """Prepares training data from MD JSON and OID annotations
 
-Converts megadetector output JSON file and OID annotationsto match CSV
-format
+Converts megadetector output JSON file and OID annotations to match
+CSV format
 
 Training annotations come from detections from MegaDetector
- 
+
 Validation and test annotations come from OIDv4 boxes.
 
 There are some assumptions about layout of data that should be
@@ -15,14 +15,11 @@ as used in this article:
 https://www.tensorflow.org/lite/models/modify/model_maker/object_detection
 
 """
-
 import json
 import csv
 import os
 import argparse
 import glob
-
-from PIL import Image
 
 from dataprep import bbox_to_pascal
 from dataprep import add_md_detection_to_csv, add_oid_annotations_to_csv
@@ -103,10 +100,12 @@ def main():
                                           recursive=True))
 
         for (val_txt, val_img) in zip(val_txt_files, val_img_files):
-            add_oid_annotations_to_csv(csv_writer, val_img, val_txt, 'VALIDATION')
+            add_oid_annotations_to_csv(csv_writer, val_img, val_txt,
+                                       'VALIDATION')
 
         for (test_txt, test_img) in zip(test_txt_files, test_img_files):
-            add_oid_annotations_to_csv(csv_writer, test_img, test_txt, 'TEST')
+            add_oid_annotations_to_csv(csv_writer, test_img, test_txt,
+                                       'TEST')
 
 
 if __name__ == "__main__":
