@@ -335,7 +335,7 @@ once or only on your training images. If you choose all your images at
 once they will be randomly sorted between train, validation, and test
 with a roughly 80/10/10 split and all detections will be filtered by
 the same confidence value you provide. You should then use the
-`megadetector_json_to_csv.py` script for the next step. If you choose
+`md_json_to_csv.py` script for the next step. If you choose
 to run MegaDetector only on your training images you should use the
 `md_json_to_csv_valtest.py` script which will convert your
 MegaDetector output `.json` file as normal but then convert the
@@ -352,7 +352,7 @@ trustworthy mean Average Precision metrics.
 
 #### 2. Generate CSV for training from MegaDetector JSON
 
-Use the `megadetector_json_to_csv.py` (or `md_json_to_csv_valtest.py`)
+Use the `md_json_to_csv.py` (or `md_json_to_csv_valtest.py`)
 script on your megadetector output `.json` file to produce a `.csv`
 file in the appropriate format for training the object
 detector. MegaDetector detections are one of 3 classes, with a number
@@ -369,9 +369,9 @@ this value.
 
 To run the script enter:
 
-    cd ~/git/camml/training/
+    cd ~/git/camml/conversions/
     mkdir ~/tflite_train
-    python megadetector_json_to_csv.py ~/megadetector/demo.json ~/tflite_train/demo.csv 0.15
+    python md_json_to_csv.py ~/megadetector/demo.json ~/tflite_train/demo.csv 0.15
 
 
 #### 3. Perform training using CSV as input
@@ -379,6 +379,7 @@ To run the script enter:
 Use the `obj_det_train.py` script to train the model and export a
 TFLite model:
 
+    cd ../training/
     python obj_det_train.py ~/tflite_train/demo.csv ~/tflite_train/demo -m demo.tflite
 
 NOTE: Known issue in some installs when running previous line has been that
