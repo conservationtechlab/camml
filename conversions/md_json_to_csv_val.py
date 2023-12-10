@@ -23,7 +23,10 @@ import argparse
 import random
 import glob
 
-from PIL import Image
+from dataprep import bbox_to_pascal
+from dataprep import add_md_detection_to_csv, add_oid_annotations_to_csv
+
+TESTING = False
 
 
 def main():
@@ -62,30 +65,20 @@ def main():
         for img in image_data:
             # Set the file path
             image_path = img['file']
+            # Get the class label from the image file name
+            new_label = image_path.strip('/').split('/')[-2]
 
             if 'failure' in img.keys():
                 print(img['file'] + ' failed to access.\n')
             else:
-                for i in range(0, len(img['detections'])):
-                    # Convert xywh bbox to xmin, ymin, xmax, ymax bbox
-                    x_min, y_min, x_max, y_max = coco_to_pascal_voc(
-                        img['detections'][i]['bbox'][0],
-                        img['detections'][i]['bbox'][1],
-                        img['detections'][i]['bbox'][2],
-                        img['detections'][i]['bbox'][3])
-
-                    # Round to 4 digits to match CSV format
-                    x_min, y_min = round(x_min, 4), round(y_min, 4)
-                    x_max, y_max = round(x_max, 4), round(y_max, 4)
-
-                    # Set bbox coordinates to new values
-                    img['detections'][i]['bbox'][0] = x_min
-                    img['detections'][i]['bbox'][1] = y_min
-                    img['detections'][i]['bbox'][2] = x_max
-                    img['detections'][i]['bbox'][3] = y_max
+                for detection in img['detections']:
+                    # convert bbox to Pascal VOC
+                    bbox_to_pascal(detection['bbox'])
 
                     # Randomly set 90% of images to train,
                     # and 10% to test.
+                    if TESTING:
+                        random.seed(42)
                     rand_num = random.randint(1, 100)
                     set_type = ''
 
@@ -94,23 +87,10 @@ def main():
                     elif rand_num <= 100:
                         set_type = 'TEST'
 
-                    # Get the class name from the image file name
-                    category = img['file'].strip('/').split('/')[-2]
-
-                    # Megadetector uses 3 categories 1-animal, 2-person,
-                    # 3-vehicle, only the animal detections are needed
-                    # Filters detections so only >= conf detections appear
-                    if (img['detections'][i]['category'] == '1'
-                            and img['detections'][i]['conf'] >= args.conf):
-                        csv_writer.writerow([set_type,
-                                             image_path,
-                                             category,
-                                             img['detections'][i]['bbox'][0],
-                                             img['detections'][i]['bbox'][1],
-                                             None, None,
-                                             img['detections'][i]['bbox'][2],
-                                             img['detections'][i]['bbox'][3],
-                                             None, None])
+                    add_md_detection_to_csv(csv_writer, detection,
+                                            set_type, image_path,
+                                            new_label,
+                                            confidence_threshold=args.conf)
 
                 # To make images with no detections appear in the csv file
                 if args.include:
@@ -121,11 +101,15 @@ def main():
                                              None, None, None,
                                              None, None, None])
 
-        # Iterate through OID labels
-        # Convert OID annotations to autoML format
-        # Write validation annotations to csv
-        folder = image_path.rfind('train')
-        val_img_path = os.path.join(image_path[:folder] + 'validation/')
+        # Retrieve validation annotation data from manually labelled
+        # OID validation and write that into the data CSV.  Looks like
+        # there is an assumption that only the classes that are
+        # represented into the JSON are present in the validation
+        # folder. Probably should address that assumption.
+        set_type = 'VALIDATION'
+
+        path_index = image_path.rfind('train')
+        val_img_path = os.path.join(image_path[:path_index] + 'validation/')
 
         # Go to the label folder path and gather all text files recursively
         txt_files = sorted(glob.glob(val_img_path + '/**/*.txt',
@@ -135,53 +119,7 @@ def main():
 
         # For each text file change the annotations and write to csv
         for (txt, img) in zip(txt_files, img_files):
-            with open(txt,
-                      'r', encoding='utf-8') as current_file:
-                val_img = Image.open(img)
-
-                width, height = val_img.size
-
-                val_data = current_file.read()
-
-                val_data = val_data.split('\n')
-                val_data = val_data[:-1]
-
-                # Set all annotatins to validation
-                set_type = 'VALIDATION'
-
-                # For each detection change to normalized xyxy
-                for element in val_data:
-                    detections = element.split()
-
-                    detections[1] = round(float(detections[1]) / width, 4)
-                    detections[2] = round(float(detections[2]) / height, 4)
-                    detections[3] = round(float(detections[3]) / width, 4)
-                    detections[4] = round(float(detections[4]) / height, 4)
-
-                    csv_writer.writerow([set_type,
-                                         img,
-                                         detections[0], detections[1],
-                                         detections[2], None, None,
-                                         detections[3], detections[4],
-                                         None, None])
-
-
-def coco_to_pascal_voc(x_tl, y_tl, width, height):
-    """Convert Coco bounding box to Pascal Voc bounding box
-
-    Parameters:
-        x_tl (float):Float representing the min x coordinate of the bbox
-        y_tl (float):Float representing the min y coordinate of the bbox
-        width (float):Float representing the width of the bbox
-        height (float):Float representing the height of the bbox
-
-    Returns:
-        x_min (float):Float representing the min x coordinate of the bbox
-        y_min (float):Float representing the min y coordinate of the bbox
-        x_max (float):Float representing the max x coordinate of the bbox
-        y_max (float):Float representing the max y coordinate of the bbox
-    """
-    return [x_tl, y_tl, x_tl + width, y_tl + height]
+            add_oid_annotations_to_csv(csv_writer, img, txt, set_type)
 
 
 if __name__ == "__main__":
