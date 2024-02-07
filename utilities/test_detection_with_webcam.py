@@ -4,29 +4,47 @@ Captures from webcam (assumes attached webcam) continuously and runs
 object detector on Coral USB accelerator (also assumes is attached) on
 captured frames, reporting detected objects to terminal.
 
+Example usage:
+
+python test_detection_with_webcam.py --threshold .2 \
+--model ~/tflite_train/eleven_animals/eleven_animals_e25_edgetpu.tflite \
+--labelmap ~/tflite_train/eleven_animals/labelmap.txt
+
 """
-import os
 import sys
+import argparse
 
 import cv2
 
 from camml.coral import ObjectDetectorHandler
 
-MODEL_PATH = '/usr/share/pycoral/examples/models'
-MODEL_CONFIG_FILE = 'ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite'
-CLASS_NAMES_FILE = "coco_labels.txt"
+parser = argparse.ArgumentParser()
+parser.add_argument('-t',
+                    '--threshold',
+                    default=.1
+                    )
+parser.add_argument('-l',
+                    '--labelmap',
+                    default=.1
+                    )
+parser.add_argument('-m',
+                    '--model',
+                    default=.1
+                    )
 
+args = parser.parse_args()
+
+MODEL_CONFIG = args.model
+CLASSES_FILE = args.labelmap
+
+SCORE_THRESHOLD = float(args.threshold)
 INPUT_WIDTH = INPUT_HEIGHT = 416
-SCORE_THRESHOLD = .7
 NMS_THRESHOLD = .4
 
-MODEL_CONFIG = os.path.join(MODEL_PATH,
-                            MODEL_CONFIG_FILE)
-CLASSES_FILE = os.path.join(MODEL_PATH,
-                            CLASS_NAMES_FILE)
-CLASSES = []
-for row in open(CLASSES_FILE):
-    CLASSES.append(row.strip())
+with open(CLASSES_FILE, 'r', encoding='utf-8') as file:
+    CLASSES = file.read().splitlines()
+
+print("Using these classes: " + ', '.join(CLASSES))
 
 detector = ObjectDetectorHandler(MODEL_CONFIG,
                                  None,
@@ -47,12 +65,12 @@ try:
                                        .2)
 
         if lboxes:
-            print("----{:.2f} milliseconds".format(inf_time))
+            print(f"----{inf_time:.2f} milliseconds")
 
             for lbox in lboxes:
                 label = CLASSES[lbox['class_id']]
                 score = lbox['confidence']
-                print("{} | {:.2f}".format(label, score))
+                print(f"{label} | {score:.2f}")
 except KeyboardInterrupt:
     print('Received keyboard interrupt.')
     sys.exit()
