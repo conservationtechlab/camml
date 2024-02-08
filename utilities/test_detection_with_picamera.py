@@ -59,8 +59,9 @@ picam2.start()
 try:
     while True:
         # WATCH OUT: will there be an unaddressed RGB/BGR shift here?
-        # detector.infer definitely assumes BGR Should be addressed in
-        # the picamera config above but needs to be double-checked
+        # detector.infer assumes BGR (double-check that). Picamera's
+        # capturing to BGR should be addressed in the picamera config
+        # above but that also needs to be double-checked
         frame = picam2.capture_array()
 
         objs, inf_time = detector.infer(frame)
