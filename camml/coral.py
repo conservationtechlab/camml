@@ -168,9 +168,12 @@ class ObjectDetectorHandler():
 
 
 def read_classes_from_file(label_file):
-    labels = []
-    for row in open(label_file, encoding='utf-8'):
-        labels.append(row.strip())
+    """Read the class names from the label file into a list
+
+    """
+
+    with open(label_file, 'r', encoding='utf-8') as file:
+        labels = file.read().splitlines()
 
     return labels
 
@@ -243,7 +246,7 @@ class TargetDetector(ObjectDetectorHandler):
         """
         results, inference_time = self.infer(frame)
         msg = ("[INFO] Inference time: "
-               + "{:.1f} milliseconds".format(inference_time))
+               + f"{inference_time:.1f} milliseconds")
         print(msg)
         lboxes = self.filter_boxes(results,
                                    frame,
