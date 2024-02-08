@@ -6,8 +6,12 @@ import time
 import cv2
 from PIL import Image
 
-from pycoral.adapters import common, classify, detect
-from pycoral.utils.edgetpu import make_interpreter
+import camml.coraldetect as detect
+import camml.coralcommon as common
+from camml.coraledgetpu import make_interpreter
+# The updating of classification bits to not need pycoral not yet dealt with.
+# Leaving below commented code as a reminder of that todo:
+# from pycoral.adapters import classify
 
 
 class ImageClassifierHandler():
